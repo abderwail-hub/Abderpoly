@@ -173,7 +173,7 @@
       </div>
 
       <div id="admin-control-view" style="display:none;">
-        <h3 style="margin-bottom: 8px;">⚙️ Reinitialisation</h3>
+        <h3 style="margin-bottom: 8px;">⚙️ Réinitialisation</h3>
         <div class="btn-group">
           <button class="btn-secondary" onclick="resetBalancesOnly()">🔄 Remettre tous les soldes à 1500 €</button>
           <button class="btn-danger" onclick="resetWholeGame()">🗑️ Effacer toute la partie</button>
@@ -188,12 +188,14 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, update, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ CONSERVE TES IDENTIFIANTS FIREBASE ICI
     const firebaseConfig = {
-      apiKey: "TON_API_KEY",
-      authDomain: "TON_PROJECT.firebaseapp.com",
-      databaseURL: "https://TON_PROJECT-default-rtdb.firebaseio.com",
-      projectId: "TON_PROJECT"
+      apiKey: "AIzaSyB2qKPvvtMW-x29QE195uU_sTn065sNy14",
+      authDomain: "abderpoly.firebaseapp.com",
+      databaseURL: "https://abderpoly-default-rtdb.firebaseio.com",
+      projectId: "abderpoly",
+      storageBucket: "abderpoly.firebasestorage.app",
+      messagingSenderId: "24161366486",
+      appId: "1:24161366486:web:0d09ceefaf7159638e3477"
     };
 
     const ADMIN_CODE = "1234";
@@ -234,7 +236,7 @@
       { id: "p18", name: "Avenue de Breteuil", group: "vert", class: "prop-vert" },
       { id: "p19", name: "Avenue Foch", group: "vert", class: "prop-vert" },
       { id: "p20", name: "Boulevard des Capucines", group: "vert", class: "prop-vert" },
-      // Bleu Foncè
+      // Bleu Foncé
       { id: "p21", name: "Avenue des Champs-Élysées", group: "bleu-fonce", class: "prop-bleu-fonce" },
       { id: "p22", name: "Rue de la Paix", group: "bleu-fonce", class: "prop-bleu-fonce" },
       // Gares
@@ -287,7 +289,7 @@
           myCurrentBalance = data.balance || 0;
           document.getElementById("display-balance").innerText = myCurrentBalance;
           
-          // Render proprietes du joueur
+          // Render propriétés du joueur
           const props = data.properties || {};
           let html = "";
           for (let pId in props) {
