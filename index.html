@@ -410,7 +410,7 @@
     appId: "1:24161366486:web:0d09ceefaf7159638e3477"
   };
 
-  const ADMIN_CODE = "1918";
+  const ADMIN_CODE = "1234";
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
@@ -424,6 +424,10 @@
   let auctionTimerInterval = null;
   let gameJoined = false;
   let allPlayersCache = {};
+  
+  // NOUVEAU : Suivi du tour et si le dé a été lancé
+  let isMyTurn = false;
+  let hasRolledDiceThisTurn = false;
 
   const ALL_PROPERTIES = [
     { id: "p1", name: "Boulevard de Belleville", group: "marron", class: "prop-marron", price: 60, rent: [2, 10, 30, 90, 160, 250], houseCost: 50, mortgage: 30 },
@@ -499,7 +503,6 @@
     { id: 39, name: "Rue de la Paix", type: "property", propId: "p22" }
   ];
 
-  // LOGIQUE DU CALCUL DE LOYER
   function calculateRent(prop, owner, diceTotal = 0) {
     if (!owner || !owner.properties || !owner.properties[prop.id]) return 0;
     const ownerProps = owner.properties;
@@ -569,13 +572,49 @@
     }
   };
 
-  // ECOUTE GLOBALE DE FIREBASE
+  // NOUVELLE FONCTION : METTRE SA PROPRE PROPRIÉTÉ AUX ENCHÈRES
+  window.startOwnAuction = async function(propId) {
+    if (!isMyTurn) {
+      return alert("🛑 Tu peux mettre une propriété aux enchères uniquement quand c'est TON TOUR !");
+    }
+    if (hasRolledDiceThisTurn) {
+      return alert("🛑 Tu dois mettre la propriété aux enchères AVANT de lancer les dés !");
+    }
+
+    const propObj = ALL_PROPERTIES.find(p => p.id === propId);
+    if (!propObj) return;
+
+    if (!confirm(`Veux-tu vraiment mettre ${propObj.name} aux enchères ?`)) return;
+
+    // Retirer la propriété du joueur vendeur
+    await remove(ref(db, `game/players/${myPlayerId}/properties/${propId}`));
+
+    // Lancer l'enchère globale
+    const auctionData = {
+      active: true,
+      propId: propObj.id,
+      propName: propObj.name,
+      startPrice: Math.floor(propObj.price / 2),
+      currentBid: Math.floor(propObj.price / 2),
+      highestBidderId: null,
+      highestBidderName: null,
+      sellerId: myPlayerId, // On enregistre le vendeur pour lui donner l'argent
+      endTime: Date.now() + 15000,
+      processed: false
+    };
+
+    await set(ref(db, 'game/auction'), auctionData);
+  };
+
   function startGlobalListeners() {
     onValue(ref(db, 'game/players'), (snapshot) => {
       allPlayersCache = snapshot.val() || {};
       renderBankerPlayerList(allPlayersCache);
       renderLeaderboard(allPlayersCache);
       updateTransferSelect(allPlayersCache);
+      if (myPlayerId && allPlayersCache[myPlayerId]) {
+        renderMyProperties(allPlayersCache[myPlayerId]);
+      }
     });
 
     onValue(ref(db, 'game/turn'), (snapshot) => {
@@ -590,15 +629,28 @@
         nameEl.innerText = pName;
 
         if (curId === myPlayerId) {
-          diceBtn.disabled = false;
-          diceBtn.innerText = "🎲 Lancer les Dés (C'est à TOI !)";
+          if (!isMyTurn) {
+            // Nouveau tour pour moi : réinitialiser le flag
+            hasRolledDiceThisTurn = false;
+          }
+          isMyTurn = true;
+          diceBtn.disabled = hasRolledDiceThisTurn;
+          diceBtn.innerText = hasRolledDiceThisTurn ? "🎲 Dés déjà lancés" : "🎲 Lancer les Dés (C'est à TOI !)";
         } else {
+          isMyTurn = false;
+          hasRolledDiceThisTurn = false;
           diceBtn.disabled = true;
           diceBtn.innerText = `🎲 Lancer les Dés (Tour de ${pName})`;
         }
       } else {
         nameEl.innerText = "Non défini";
         diceBtn.disabled = true;
+        isMyTurn = false;
+      }
+
+      // Re-rendre la liste des propriétés pour activer/désactiver le bouton enchère
+      if (myPlayerId && allPlayersCache[myPlayerId]) {
+        renderMyProperties(allPlayersCache[myPlayerId]);
       }
     });
 
@@ -738,7 +790,73 @@
     document.getElementById("leaderboard-card").style.display = "block";
   }
 
-  // LOGIQUE BANQUIER / ACTIONS
+  // FONCTION DE RENDU DES PROPRIÉTÉS DU JOUEUR (AVEC BOUTON ENCHÈRE)
+  // RENDU DES PROPRIÉTÉS DU JOUEUR (AVEC DÉTAILS AU CLIC ET ENCHÈRE)
+  function renderMyProperties(data) {
+    const props = data.properties || {};
+    let html = "";
+    
+    const groups = {};
+    for (let pId in props) {
+      const propObj = ALL_PROPERTIES.find(p => p.id === pId);
+      if (!propObj) continue;
+
+      const groupName = propObj.group || "autres";
+      const houseCount = props[pId].houses || 0;
+
+      if (!groups[groupName]) {
+        groups[groupName] = {
+          colorClass: propObj.class,
+          properties: [],
+          houseCost: propObj.houseCost,
+          fullGroup: ownsFullGroup(data, propObj)
+        };
+      }
+
+      groups[groupName].properties.push({
+        name: propObj.name,
+        houseCount,
+        propId: pId,
+        className: propObj.class
+      });
+    }
+
+    const canAuction = isMyTurn && !hasRolledDiceThisTurn;
+
+    Object.keys(groups).forEach(groupName => {
+      const group = groups[groupName];
+      const totalHouses = group.properties.reduce((sum, item) => sum + item.houseCount, 0);
+      const canBuy = group.fullGroup && totalHouses < group.properties.length * 5;
+      const affordHouse = myCurrentBalance >= (group.houseCost || 0);
+      const buyButton = canBuy ? `<button class="btn-sm btn-success" ${!affordHouse ? 'disabled title="Solde insuffisant"' : `onclick="buyHouseGroup('${groupName}')"`}>+ Construire (${group.houseCost} €)</button>` : '';
+
+      html += `
+        <div style="margin-bottom: 10px; border:1px solid #eee; border-radius:8px; padding:10px; background:#fafafa;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong>${groupName.toUpperCase()}</strong>
+            ${buyButton}
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${group.properties.map(item => `
+              <div style="padding:6px; background:white; border:1px solid #ddd; border-radius:6px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <span style="cursor:pointer;" onclick="openPropertyDetailsModal('${item.propId}')">
+                  <span class="prop-tag ${item.className}">${item.name} 🔍</span>
+                  ${item.houseCount ? ` (${item.houseCount === 5 ? '🏨 Hôtel' : item.houseCount + ' 🏠'})` : ''}
+                </span>
+                <button class="btn-sm btn-warning" 
+                  ${!canAuction ? 'disabled title="Accessible uniquement à votre tour AVANT d\'avoir lancé le dé"' : ''} 
+                  onclick="startOwnAuction('${item.propId}')">
+                  🔨 Enchère
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+    });
+
+    document.getElementById("my-properties-list").innerHTML = html || '<span style="font-size:0.8rem; color:var(--text-muted);">Aucune propriété.</span>';
+  }
+  // ACTIONS BANQUIER
   window.bankerAdjustBalance = async function(targetId, delta) {
     const pRef = ref(db, `game/players/${targetId}/balance`);
     const snap = await get(pRef);
@@ -906,70 +1024,25 @@
         document.getElementById("current-position-idx").innerText = pos;
         document.getElementById("current-position-name").innerText = BOARD[pos].name;
 
-        const props = data.properties || {};
-        let html = "";
-        const groups = {};
-        for (let pId in props) {
-          const propObj = ALL_PROPERTIES.find(p => p.id === pId);
-          if (!propObj || !propObj.houseCost) continue;
-
-          const houseCount = props[pId].houses || 0;
-          if (!groups[propObj.group]) {
-            groups[propObj.group] = {
-              colorClass: propObj.class,
-              properties: [],
-              houseCost: propObj.houseCost,
-              fullGroup: ownsFullGroup(data, propObj)
-            };
-          }
-
-          groups[propObj.group].properties.push({
-            name: propObj.name,
-            houseCount,
-            propId: pId,
-            className: propObj.class
-          });
-        }
-
-        Object.keys(groups).forEach(groupName => {
-          const group = groups[groupName];
-          const totalHouses = group.properties.reduce((sum, item) => sum + item.houseCount, 0);
-          const canBuy = group.fullGroup && totalHouses < group.properties.length * 5;
-          const affordHouse = myCurrentBalance >= group.houseCost;
-          const buyButton = canBuy ? `<button class="btn-sm btn-success" ${!affordHouse ? 'disabled title="Solde insuffisant"' : `onclick="buyHouseGroup('${groupName}')"`}>+ Construire (${group.houseCost} €)</button>` : '';
-
-          html += `
-            <div style="margin-bottom: 10px; border:1px solid #eee; border-radius:8px; padding:10px; background:#fafafa;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <strong>${groupName.toUpperCase()}</strong>
-                ${buyButton}
-              </div>
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-                ${group.properties.map(item => `
-                  <div style="padding:6px; background:white; border:1px solid #ddd; border-radius:6px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                    <span><span class="prop-tag ${item.className}">${item.name}</span>${item.houseCount ? ` (${item.houseCount === 5 ? '🏨 Hôtel' : item.houseCount + ' 🏠'})` : ''}</span>
-                  </div>
-                `).join('')}
-              </div>
-            </div>`;
-        });
-
-        document.getElementById("my-properties-list").innerHTML = html || '<span style="font-size:0.8rem; color:var(--text-muted);">Aucune propriété.</span>';
+        renderMyProperties(data);
       }
     });
   }
 
-  // DÉS & CALCUL SUR CASE
-  // DÉS & CALCUL SUR CASE (AVEC GESTION PRISON)
+  // DÉS ET PRISON
   window.rollDice = async function() {
+    if (!isMyTurn) return alert("Ce n'est pas ton tour !");
+
     const playerSnap = await get(ref(db, `game/players/${myPlayerId}`));
     const player = playerSnap.val();
 
-    // 1. SI LE JOUEUR EST EN PRISON
+    hasRolledDiceThisTurn = true;
+    document.getElementById("roll-dice-btn").disabled = true;
+
+    // 1. SI EN PRISON
     if (player.inJail) {
       const turns = (player.jailTurns || 0) + 1;
-      
-      const choice = confirm(`🔒 Tu es en prison (Tour ${turns}/3).\n\nClique sur [OK] pour payer 50 € et sortir immédiatement.\nClique sur [Annuler] pour tenter de lancer les dés.`);
+      const choice = confirm(`🔒 Tu es en prison (Tour ${turns}/3).\n\nClique sur [OK] pour payer 50 € et sortir immédiatement.\nClique sur [Annuler] pour tenter un double.`);
       
       if (choice) {
         if ((player.balance || 0) < 50) {
@@ -986,7 +1059,6 @@
         }
       }
 
-      // Tentative au lancer de dés (recherche de double)
       const d1 = Math.floor(Math.random() * 6) + 1;
       const d2 = Math.floor(Math.random() * 6) + 1;
 
@@ -999,7 +1071,7 @@
         });
       } else {
         if (turns >= 3) {
-          alert(`🎲 Pas de double (${d1} et ${d2}). 3ᵉ tour atteint : Tu dois payer 50 € pour sortir.`);
+          alert(`🎲 Pas de double (${d1} et ${d2}). 3ᵉ tour atteint : Tu paies 50 € et tu sors.`);
           await update(ref(db, `game/players/${myPlayerId}`), {
             balance: Math.max(0, (player.balance || 0) - 50),
             inJail: false,
@@ -1032,9 +1104,8 @@
       alert(`🎲 Dés : ${d1} + ${d2} = ${total}.\nTu atterris sur : ${BOARD[newPos].name}`);
     }
 
-    // CASE 30 = ALLEZ EN PRISON
     if (newPos === 30) {
-      alert("🚨 Police ! Allez directement en Prison sans passer par la case Départ !");
+      alert("🚨 Police ! Allez directement en Prison !");
       await update(ref(db, `game/players/${myPlayerId}`), {
         position: 10,
         inJail: true,
@@ -1092,7 +1163,7 @@
     }
   }
 
-  // ENCHÈRES
+  // ENCHÈRES BANQUE / TERRAIN LIBRE
   window.triggerAuctionFromModal = async function() {
     if (!currentModalProp) return;
     document.getElementById("purchase-modal").style.display = "none";
@@ -1105,6 +1176,7 @@
       currentBid: currentModalProp.price / 2,
       highestBidderId: null,
       highestBidderName: null,
+      sellerId: null,
       endTime: Date.now() + 15000,
       processed: false
     };
@@ -1133,9 +1205,20 @@
 
   async function finalizeAuction(auction) {
     await update(ref(db, 'game/auction'), { processed: true, active: false });
+    
+    // Déduire l'argent du gagnant et lui ajouter la propriété
     await update(ref(db, `game/players/${myPlayerId}`), { balance: myCurrentBalance - auction.currentBid });
     await update(ref(db, `game/players/${myPlayerId}/properties`), { [auction.propId]: { houses: 0 } });
-    alert(`🎉 FÉLICITATIONS ! Tu as remporté ${auction.propName} pour ${auction.currentBid} € !`);
+
+    // Si la vente venait d'un joueur (vendeur), lui crediter l'argent !
+    if (auction.sellerId) {
+      const sellerSnap = await get(ref(db, `game/players/${auction.sellerId}/balance`));
+      const sellerBal = sellerSnap.val() || 0;
+      await set(ref(db, `game/players/${auction.sellerId}/balance`), sellerBal + auction.currentBid);
+      alert(`🎉 Enchère terminée ! Tu as remporté ${auction.propName} pour ${auction.currentBid} € !`);
+    } else {
+      alert(`🎉 FÉLICITATIONS ! Tu as remporté ${auction.propName} pour ${auction.currentBid} € !`);
+    }
   }
 
   // ACHAT DIRECT & TRANSACTIONS
@@ -1161,9 +1244,28 @@
       const targetBal = (allPlayersCache[target] ? allPlayersCache[target].balance : 0) || 0;
       await update(ref(db, `game/players/${target}`), { balance: targetBal + amount });
     }
-
+  
     document.getElementById("transfer-amount").value = "";
     alert("Paiement effectué !");
+  };
+
+// NOUVELLE FONCTION : AFFICHER LES DÉTAILS D'UNE CARTE QUAND ON CLIQUE DESSUS
+  window.openPropertyDetailsModal = function(propId) {
+    const propDetails = ALL_PROPERTIES.find(p => p.id === propId);
+    if (!propDetails) return;
+
+    currentModalProp = propDetails;
+    
+    // Remplir le modal d'achat/détails
+    document.getElementById("modal-prop-name").innerText = propDetails.name;
+    document.getElementById("modal-prop-details").innerText = `Prix de valeur : ${propDetails.price} €`;
+    
+    // Afficher directement la grille des loyers/stats
+    toggleCardStats("purchase-stats-box");
+    document.getElementById("purchase-stats-box").style.display = "block";
+    
+    // Ouvrir le modal
+    document.getElementById("purchase-modal").style.display = "flex";
   };
 
   window.loadSavedPlayerName = function() {
