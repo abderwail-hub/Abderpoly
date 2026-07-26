@@ -5,86 +5,216 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Banque Jeu de Plateau</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; background: #f0f2f5; text-align: center; }
-    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    button { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; cursor: pointer; }
-    button:disabled { background: #ccc; }
-    input { padding: 10px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
-    .player-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; padding-bottom: 80px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    
+    .app-container { width: 100%; max-width: 480px; }
+    
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 { font-size: 1.8rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .header p { color: var(--text-muted); font-size: 0.9rem; }
+
+    .card { background: var(--card-bg); padding: 24px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 20px; }
+    
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+    
+    input, select { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); font-size: 1rem; outline: none; transition: border-color 0.2s; background: #f8fafc; }
+    input:focus, select:focus { border-color: var(--primary); background: #fff; }
+
+    .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    
+    button { width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: var(--primary-hover); }
+    button.btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); }
+    button.btn-secondary:hover { background: #e2e8f0; }
+    button.btn-success { background: var(--success); }
+    button.btn-success:hover { background: #15803d; }
+    button.btn-danger { background: var(--danger); }
+    button.btn-danger:hover { background: #b91c1c; }
+
+    .balance-display { text-align: center; padding: 20px 0; }
+    .balance-amount { font-size: 3rem; font-weight: 800; color: var(--success); margin: 8px 0; }
+    
+    .player-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .player-row:last-child { border-bottom: none; }
+    .player-name { font-weight: 600; }
+    .player-balance { font-weight: 700; color: var(--success); }
+
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; background: #dbeafe; color: #1e40af; margin-left: 8px; }
+
+    .config-warning { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; text-align: left; }
+
+    /* BOUTON ET MODAL ADMIN */
+    .admin-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid var(--border); padding: 10px 20px; text-align: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); }
+    .admin-bar button { width: auto; padding: 8px 16px; font-size: 0.85rem; background: #64748b; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; padding: 20px; z-index: 1000; }
+    .modal { background: white; padding: 24px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
   </style>
 </head>
 <body>
 
-  <h1>💸 Banque de Jeu</h1>
+  <div class="app-container">
+    <div class="header">
+      <h1>🎲 Monopoly Bank</h1>
+      <p>Compte bancaire & transactions en direct</p>
+    </div>
 
-  <!-- ÉCRAN 1 : CONNEXION AU LOBBY -->
-  <div id="setup-screen" class="card">
-    <h2>Rejoindre ou Créer une partie</h2>
-    <input type="text" id="player-name" placeholder="Ton Prénom">
-    <br><br>
-    <button onclick="joinGame('banker')">Créer en tant que Banquier</button>
-    <button onclick="joinGame('player')">Rejoindre comme Joueur</button>
+    <!-- ÉCRAN 1 : REJOINDRE OU CRÉER -->
+    <div id="setup-screen" class="card">
+      <div id="config-alert" class="config-warning" style="display:none;">
+        ⚠️ N'oublie pas d'ajouter ta vraie configuration Firebase dans le code !
+      </div>
+
+      <div class="form-group">
+        <label for="player-name">Ton Prénom</label>
+        <input type="text" id="player-name" placeholder="Ex: Alex">
+      </div>
+
+      <div class="btn-group">
+        <button onclick="joinGame('player')">🎮 Rejoindre comme Joueur</button>
+        <button class="btn-secondary" onclick="joinGame('banker')">🏦 Ouvrir la vue Banquier</button>
+      </div>
+    </div>
+
+    <!-- ÉCRAN 2 : TABLEAU DE BORD BANQUIER -->
+    <div id="banker-screen" class="card" style="display:none;">
+      <h2>📊 Tableau de Bord Banquier</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Vue d'ensemble de tous les comptes</p>
+      <div id="players-list">
+        <p style="text-align: center; color: var(--text-muted);">En attente de joueurs...</p>
+      </div>
+    </div>
+
+    <!-- ÉCRAN 3 : INTERFACE JOUEUR -->
+    <div id="player-screen" class="card" style="display:none;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 id="display-name">Joueur</h2>
+        <span class="badge">Joueur</span>
+      </div>
+
+      <div class="balance-display">
+        <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Solde actuel</div>
+        <div class="balance-amount"><span id="display-balance">1500</span> €</div>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+
+      <h3>💸 Faire une transaction</h3>
+      <br>
+      
+      <div class="form-group">
+        <label for="transfer-target">Envoyer à</label>
+        <select id="transfer-target">
+          <option value="bank">🏦 La Banque</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="transfer-amount">Montant (€)</label>
+        <input type="number" id="transfer-amount" placeholder="200" min="1">
+      </div>
+
+      <button onclick="sendMoney()" style="margin-bottom: 12px;">Envoyer le paiement</button>
+      <button class="btn-success" onclick="passStart()">🚗 Case Départ (+200€)</button>
+    </div>
   </div>
 
-  <!-- ÉCRAN 2 : INTERFACE DU BANQUIER -->
-  <div id="banker-screen" class="card" style="display:none;">
-    <h2>Tableau de Bord du Banquier</h2>
-    <div id="players-list"></div>
+  <!-- BARRE DU BAS : BOUTON ADMIN -->
+  <div class="admin-bar">
+    <button onclick="openAdminModal()">🔒 Accès Admin</button>
   </div>
 
-  <!-- ÉCRAN 3 : INTERFACE DU JOUEUR -->
-  <div id="player-screen" class="card" style="display:none;">
-    <h2 id="display-name">Joueur</h2>
-    <p style="font-size: 2em; color: #28a745; font-weight: bold;">
-      Solde : <span id="display-balance">0</span> €
-    </p>
-    <hr>
-    <h3>Actions rapides</h3>
-    <button onclick="passStart()">Passer la case Départ (+200€)</button>
+  <!-- MODAL DE CONNEXION / PANNEAU ADMIN -->
+  <div id="admin-modal" class="modal-overlay">
+    <div class="modal">
+      <!-- FORMULAIRE CODE SECRET -->
+      <div id="admin-login-view">
+        <h3 style="margin-bottom: 12px;">🔒 Accès Administrateur</h3>
+        <div class="form-group">
+          <label for="admin-pass">Code PIN Admin</label>
+          <input type="password" id="admin-pass" placeholder="Entrez le code secret">
+        </div>
+        <div class="btn-group">
+          <button onclick="verifyAdminCode()">Se connecter</button>
+          <button class="btn-secondary" onclick="closeAdminModal()">Annuler</button>
+        </div>
+      </div>
+
+      <!-- PANNEAU DE CONTRÔLE ADMIN -->
+      <div id="admin-control-view" style="display:none;">
+        <h3 style="margin-bottom: 8px;">⚙️ Panneau de Contrôle</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Gestion de la partie en cours</p>
+        
+        <div class="btn-group">
+          <button class="btn-secondary" onclick="resetBalancesOnly()">🔄 Remettre tous les soldes à 1500 €</button>
+          <button class="btn-danger" onclick="resetWholeGame()">🗑️ Effacer complètement la partie</button>
+          <button class="btn-secondary" onclick="closeAdminModal()">Fermer</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- FIREBASE SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // 1. REMPLACE AVEC TES COORDONNÉES FIREBASE
+    // ⚠️ METS TES PROPRES IDENTIFIANTS FIREBASE ICI
     const firebaseConfig = {
-        apiKey: "AIzaSyB2qKPvvtMW-x29QE195uU_sTn065sNy14",
-        authDomain: "abderpoly.firebaseapp.com",
-        databaseURL: "https://abderpoly-default-rtdb.firebaseio.com",
-        projectId: "abderpoly",
-        storageBucket: "abderpoly.firebasestorage.app",
-        messagingSenderId: "24161366486",
-        appId: "1:24161366486:web:0d09ceefaf7159638e3477"
+      apiKey: "TON_API_KEY",
+      authDomain: "TON_PROJECT.firebaseapp.com",
+      databaseURL: "https://TON_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "TON_PROJECT"
     };
+
+    const ADMIN_CODE = "1234"; // 🔑 CODE SECRET ADMIN (À MODIFIER SI TU VEUX)
+
+    if (firebaseConfig.apiKey === "TON_API_KEY") {
+      document.getElementById("config-alert").style.display = "block";
+    }
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
     let myPlayerId = "";
+    let myCurrentBalance = 1500;
 
     window.joinGame = function(role) {
       const name = document.getElementById("player-name").value.trim();
-      if (!name) return alert("Rentre ton prénom !");
+      if (!name) return alert("Rentre ton prénom pour continuer !");
 
-      myPlayerId = name.toLowerCase().replace(/\s+/g, "_");
+      myPlayerId = name.toLowerCase().replace(/[^a-z0-9]/g, "_");
 
       if (role === 'banker') {
         document.getElementById("setup-screen").style.display = "none";
         document.getElementById("banker-screen").style.display = "block";
 
-        // Le Banquier écoute la liste des joueurs en temps réel
         onValue(ref(db, 'game/players'), (snapshot) => {
           const players = snapshot.val() || {};
           let html = "";
           for (let id in players) {
             html += `
               <div class="player-row">
-                <span><b>${players[id].name}</b></span>
-                <span>${players[id].balance} €</span>
+                <span class="player-name">${players[id].name}</span>
+                <span class="player-balance">${players[id].balance} €</span>
               </div>`;
           }
+          if (html === "") html = '<p style="text-align: center; color: var(--text-muted);">Aucun joueur connecté</p>';
           document.getElementById("players-list").innerHTML = html;
         });
 
@@ -93,27 +223,110 @@
         document.getElementById("player-screen").style.display = "block";
         document.getElementById("display-name").innerText = name;
 
-        // Création du joueur avec 1500€ de départ s'il n'existe pas encore
         const playerRef = ref(db, 'game/players/' + myPlayerId);
-        set(playerRef, { name: name, balance: 1500 });
 
-        // Le joueur écoute son propre solde en temps réel
+        get(playerRef).then((snapshot) => {
+          if (!snapshot.exists()) {
+            set(playerRef, { name: name, balance: 1500 });
+          }
+        });
+
         onValue(playerRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
+            myCurrentBalance = data.balance;
             document.getElementById("display-balance").innerText = data.balance;
+          }
+        });
+
+        onValue(ref(db, 'game/players'), (snapshot) => {
+          const players = snapshot.val() || {};
+          const select = document.getElementById("transfer-target");
+          select.innerHTML = '<option value="bank">🏦 La Banque</option>';
+          for (let id in players) {
+            if (id !== myPlayerId) {
+              select.innerHTML += `<option value="${id}">👤 ${players[id].name}</option>`;
+            }
           }
         });
       }
     };
 
-    // Action : Passer par la case départ (+200€)
     window.passStart = function() {
-      const balanceSpan = document.getElementById("display-balance");
-      const currentBalance = parseInt(balanceSpan.innerText);
-      
       update(ref(db, 'game/players/' + myPlayerId), {
-        balance: currentBalance + 200
+        balance: myCurrentBalance + 200
+      });
+    };
+
+    window.sendMoney = function() {
+      const targetId = document.getElementById("transfer-target").value;
+      const amount = parseInt(document.getElementById("transfer-amount").value);
+
+      if (!amount || amount <= 0) return alert("Rentre un montant valide !");
+      if (amount > myCurrentBalance) return alert("Solde insuffisant !");
+
+      update(ref(db, 'game/players/' + myPlayerId), {
+        balance: myCurrentBalance - amount
+      });
+
+      if (targetId !== 'bank') {
+        get(ref(db, 'game/players/' + targetId)).then((snapshot) => {
+          if (snapshot.exists()) {
+            const currentTargetBalance = snapshot.val().balance;
+            update(ref(db, 'game/players/' + targetId), {
+              balance: currentTargetBalance + amount
+            });
+          }
+        });
+      }
+
+      document.getElementById("transfer-amount").value = "";
+      alert("Transfert effectué !");
+    };
+
+    /* --- FONCTIONS ADMIN --- */
+    window.openAdminModal = function() {
+      document.getElementById("admin-modal").style.display = "flex";
+      document.getElementById("admin-login-view").style.display = "block";
+      document.getElementById("admin-control-view").style.display = "none";
+      document.getElementById("admin-pass").value = "";
+    };
+
+    window.closeAdminModal = function() {
+      document.getElementById("admin-modal").style.display = "none";
+    };
+
+    window.verifyAdminCode = function() {
+      const inputPass = document.getElementById("admin-pass").value;
+      if (inputPass === ADMIN_CODE) {
+        document.getElementById("admin-login-view").style.display = "none";
+        document.getElementById("admin-control-view").style.display = "block";
+      } else {
+        alert("Code PIN incorrect !");
+      }
+    };
+
+    // Remettre le solde de tout le monde à 1500 €
+    window.resetBalancesOnly = function() {
+      if (!confirm("Voulez-vous réinitialiser les soldes de tous les joueurs à 1500 € ?")) return;
+      get(ref(db, 'game/players')).then((snapshot) => {
+        if (snapshot.exists()) {
+          const players = snapshot.val();
+          for (let id in players) {
+            update(ref(db, 'game/players/' + id), { balance: 1500 });
+          }
+          alert("Tous les soldes ont été réinitialisés à 1500 € !");
+          closeAdminModal();
+        }
+      });
+    };
+
+    // Tout effacer
+    window.resetWholeGame = function() {
+      if (!confirm("ATTENTION : Cela va supprimer tous les joueurs et la partie en cours. Réinitialiser ?")) return;
+      remove(ref(db, 'game')).then(() => {
+        alert("La partie a été entièrement réinitialisée !");
+        location.reload();
       });
     };
   </script>
