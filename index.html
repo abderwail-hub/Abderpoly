@@ -87,18 +87,23 @@
     </div>
 
     <!-- ÉCRAN 1 : CONNEXION -->
-    <div id="setup-screen" class="card">
-      <div class="form-group">
-        <label for="player-name">Ton Prénom</label>
-        <input type="text" id="player-name" placeholder="Ex: Alex">
-      </div>
+     <!-- ÉCRAN 1 : CONNEXION -->
+    <!-- Écran de configuration (setup-screen) -->
+    <div id="setup-screen">
+      <h2>Rejoindre la partie</h2>
+      <input type="text" id="player-name" placeholder="Ton prénom" />
 
-      <div class="btn-group">
-        <button onclick="joinGame('player')">🎮 Rejoindre comme Joueur</button>
-        <button class="btn-secondary" onclick="joinGame('banker_only')">🏦 Banquier Uniquement (Spectateur)</button>
-        <button class="btn-secondary" onclick="joinGame('banker_player')">👑 Banquier ET Joueur</button>
-      </div>
+      <!-- Boutons du banquier (avec la classe btn-banker) -->
+      <button class="btn-banker" onclick="joinGame('banker_only')">👑 Banquier Uniquement</button>
+      <button class="btn-banker" onclick="joinGame('banker_player')">👑 Banquier & Joueur</button>
+      
+      <!-- Bouton joueur normal -->
+      <button onclick="joinGame('player_only')">👤 Joueur Uniquement</button>
+
+      <!-- (Optionnel) Un petit texte de statut -->
+      <p id="banker-status" style="color: #e74c3c; font-size: 0.85rem; display: none;"></p>
     </div>
+
 
     <!-- ÉCRAN 2 : PANNEAU BANQUIER -->
     <div id="banker-screen" class="card" style="display:none;">
@@ -185,280 +190,314 @@
 
   <!-- FIREBASE SDKs -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, update, get, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB2qKPvvtMW-x29QE195uU_sTn065sNy14",
-      authDomain: "abderpoly.firebaseapp.com",
-      databaseURL: "https://abderpoly-default-rtdb.firebaseio.com",
-      projectId: "abderpoly",
-      storageBucket: "abderpoly.firebasestorage.app",
-      messagingSenderId: "24161366486",
-      appId: "1:24161366486:web:0d09ceefaf7159638e3477"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyB2qKPvvtMW-x29QE195uU_sTn065sNy14",
+    authDomain: "abderpoly.firebaseapp.com",
+    databaseURL: "https://abderpoly-default-rtdb.firebaseio.com",
+    projectId: "abderpoly",
+    storageBucket: "abderpoly.firebasestorage.app",
+    messagingSenderId: "24161366486",
+    appId: "1:24161366486:web:0d09ceefaf7159638e3477"
+  };
 
-    const ADMIN_CODE = "1234";
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  let myPlayerId = "";
+  let myCurrentBalance = 1500;
+  let isBanker = false;
 
-    let myPlayerId = "";
-    let myCurrentBalance = 1500;
-    let isBanker = false;
+  // =========================================================================
+  // ⬇️ POSE LE CODE ICI (Écouteur temps réel pour cacher/montrer les boutons)
+  // =========================================================================
+  onValue(ref(db, 'game/banker'), (snapshot) => {
+    const bankerData = snapshot.val();
+    const bankerButtons = document.querySelectorAll('.btn-banker');
+    const statusText = document.getElementById('banker-status');
 
-    // LISTE DES PROPRIÉTÉS MONOPOLY PARIS
-    const ALL_PROPERTIES = [
-      // Marron
-      { id: "p1", name: "Boulevard de Belleville", group: "marron", class: "prop-marron" },
-      { id: "p2", name: "Rue Lecourbe", group: "marron", class: "prop-marron" },
-      // Bleu Ciel
-      { id: "p3", name: "Rue de Vaugirard", group: "bleu-ciel", class: "prop-bleu-ciel" },
-      { id: "p4", name: "Rue de Courcelles", group: "bleu-ciel", class: "prop-bleu-ciel" },
-      { id: "p5", name: "Avenue de la République", group: "bleu-ciel", class: "prop-bleu-ciel" },
-      // Rose
-      { id: "p6", name: "Boulevard de La Villette", group: "rose", class: "prop-rose" },
-      { id: "p7", name: "Avenue de Neuilly", group: "rose", class: "prop-rose" },
-      { id: "p8", name: "Rue de Paradis", group: "rose", class: "prop-rose" },
-      // Orange
-      { id: "p9", name: "Avenue Mozart", group: "orange", class: "prop-orange" },
-      { id: "p10", name: "Boulevard Saint-Michel", group: "orange", class: "prop-orange" },
-      { id: "p11", name: "Place Pigalle", group: "orange", class: "prop-orange" },
-      // Rouge
-      { id: "p12", name: "Avenue Matignon", group: "rouge", class: "prop-rouge" },
-      { id: "p13", name: "Boulevard Malesherbes", group: "rouge", class: "prop-rouge" },
-      { id: "p14", name: "Avenue Henri-Martin", group: "rouge", class: "prop-rouge" },
-      // Jaune
-      { id: "p15", name: "Faubourg Saint-Honoré", group: "jaune", class: "prop-jaune" },
-      { id: "p16", name: "Place de la Bourse", group: "jaune", class: "prop-jaune" },
-      { id: "p17", name: "Rue La Fayette", group: "jaune", class: "prop-jaune" },
-      // Vert
-      { id: "p18", name: "Avenue de Breteuil", group: "vert", class: "prop-vert" },
-      { id: "p19", name: "Avenue Foch", group: "vert", class: "prop-vert" },
-      { id: "p20", name: "Boulevard des Capucines", group: "vert", class: "prop-vert" },
-      // Bleu Foncé
-      { id: "p21", name: "Avenue des Champs-Élysées", group: "bleu-fonce", class: "prop-bleu-fonce" },
-      { id: "p22", name: "Rue de la Paix", group: "bleu-fonce", class: "prop-bleu-fonce" },
-      // Gares
-      { id: "g1", name: "Gare Montparnasse", group: "gare", class: "prop-gare" },
-      { id: "g2", name: "Gare de Lyon", group: "gare", class: "prop-gare" },
-      { id: "g3", name: "Gare du Nord", group: "gare", class: "prop-gare" },
-      { id: "g4", name: "Gare Saint-Lazare", group: "gare", class: "prop-gare" },
-      // Services
-      { id: "s1", name: "Compagnie d'Électricité", group: "service", class: "prop-service" },
-      { id: "s2", name: "Compagnie des Eaux", group: "service", class: "prop-service" }
-    ];
+    if (bankerData) {
+      // 🔴 Banquier présent : masquer les boutons chez TOUT LE MONDE en direct
+      bankerButtons.forEach(btn => btn.style.display = 'none');
 
-    window.joinGame = function(role) {
-      const name = document.getElementById("player-name").value.trim();
-      if (!name) return alert("Rentre ton prénom pour continuer !");
-
-      myPlayerId = name.toLowerCase().replace(/[^a-z0-9]/g, "_");
-      document.getElementById("setup-screen").style.display = "none";
-
-      if (role === 'banker_only') {
-        isBanker = true;
-        document.getElementById("banker-screen").style.display = "block";
-        listenToPlayersForBanker();
-      } else if (role === 'banker_player') {
-        isBanker = true;
-        document.getElementById("banker-screen").style.display = "block";
-        document.getElementById("player-screen").style.display = "block";
-        document.getElementById("role-badge").innerText = "👑 Banquier & Joueur";
-        setupPlayer(name);
-        listenToPlayersForBanker();
-      } else {
-        document.getElementById("player-screen").style.display = "block";
-        setupPlayer(name);
+      if (statusText) {
+        statusText.innerText = `👑 Banquier : ${bankerData.name}`;
+        statusText.style.display = 'block';
       }
+    } else {
+      // 🟢 Aucun banquier : réafficher les boutons
+      bankerButtons.forEach(btn => btn.style.display = 'block');
+
+      if (statusText) {
+        statusText.style.display = 'none';
+      }
+    }
+  });
+
+  const ALL_PROPERTIES = [
+    { id: "p1", name: "Boulevard de Belleville", group: "marron", class: "prop-marron" },
+    { id: "p2", name: "Rue Lecourbe", group: "marron", class: "prop-marron" },
+    { id: "p3", name: "Rue de Vaugirard", group: "bleu-ciel", class: "prop-bleu-ciel" },
+    { id: "p4", name: "Rue de Courcelles", group: "bleu-ciel", class: "prop-bleu-ciel" },
+    { id: "p5", name: "Avenue de la République", group: "bleu-ciel", class: "prop-bleu-ciel" },
+    { id: "p6", name: "Boulevard de La Villette", group: "rose", class: "prop-rose" },
+    { id: "p7", name: "Avenue de Neuilly", group: "rose", class: "prop-rose" },
+    { id: "p8", name: "Rue de Paradis", group: "rose", class: "prop-rose" },
+    { id: "p9", name: "Avenue Mozart", group: "orange", class: "prop-orange" },
+    { id: "p10", name: "Boulevard Saint-Michel", group: "orange", class: "prop-orange" },
+    { id: "p11", name: "Place Pigalle", group: "orange", class: "prop-orange" },
+    { id: "p12", name: "Avenue Matignon", group: "rouge", class: "prop-rouge" },
+    { id: "p13", name: "Boulevard Malesherbes", group: "rouge", class: "prop-rouge" },
+    { id: "p14", name: "Avenue Henri-Martin", group: "rouge", class: "prop-rouge" },
+    { id: "p15", name: "Faubourg Saint-Honoré", group: "jaune", class: "prop-jaune" },
+    { id: "p16", name: "Place de la Bourse", group: "jaune", class: "prop-jaune" },
+    { id: "p17", name: "Rue La Fayette", group: "jaune", class: "prop-jaune" },
+    { id: "p18", name: "Avenue de Breteuil", group: "vert", class: "prop-vert" },
+    { id: "p19", name: "Avenue Foch", group: "vert", class: "prop-vert" },
+    { id: "p20", name: "Boulevard des Capucines", group: "vert", class: "prop-vert" },
+    { id: "p21", name: "Avenue des Champs-Élysées", group: "bleu-fonce", class: "prop-bleu-fonce" },
+    { id: "p22", name: "Rue de la Paix", group: "bleu-fonce", class: "prop-bleu-fonce" },
+    { id: "g1", name: "Gare Montparnasse", group: "gare", class: "prop-gare" },
+    { id: "g2", name: "Gare de Lyon", group: "gare", class: "prop-gare" },
+    { id: "g3", name: "Gare du Nord", group: "gare", class: "prop-gare" },
+    { id: "g4", name: "Gare Saint-Lazare", group: "gare", class: "prop-gare" },
+    { id: "s1", name: "Compagnie d'Électricité", group: "service", class: "prop-service" },
+    { id: "s2", name: "Compagnie des Eaux", group: "service", class: "prop-service" }
+  ];
+
+  // Atomic Banker Locking Function
+  async function claimBankerRole(playerId, playerName) {
+    const bankerRef = ref(db, 'game/banker');
+
+    const result = await runTransaction(bankerRef, (currentData) => {
+      if (currentData === null) {
+        return { id: playerId, name: playerName };
+      }
+      if (currentData.id === playerId) {
+        return currentData; 
+      }
+      return undefined; // Aborts transaction
+    });
+
+    return {
+      success: result.committed,
+      currentBanker: result.snapshot.val()
     };
+  }
 
-    function setupPlayer(name) {
-      document.getElementById("display-name").innerText = name;
-      const playerRef = ref(db, 'game/players/' + myPlayerId);
+  window.joinGame = async function(role) {
+    const name = document.getElementById("player-name").value.trim();
+    if (!name) return alert("Rentre ton prénom pour continuer !");
 
-      get(playerRef).then((snapshot) => {
-        if (!snapshot.exists()) {
-          set(playerRef, { name: name, balance: 1500, properties: {} });
-        }
-      });
+    myPlayerId = name.toLowerCase().replace(/[^a-z0-9]/g, "_");
 
-      onValue(playerRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          myCurrentBalance = data.balance || 0;
-          document.getElementById("display-balance").innerText = myCurrentBalance;
-          
-          // Render propriétés du joueur
-          const props = data.properties || {};
-          let html = "";
-          for (let pId in props) {
-            const propObj = ALL_PROPERTIES.find(p => p.id === pId);
-            if (propObj) {
-              html += `<span class="prop-tag ${propObj.class}">${propObj.name}</span>`;
-            }
-          }
-          document.getElementById("my-properties-list").innerHTML = html || '<span style="font-size:0.8rem; color:var(--text-muted);">Aucune propriété.</span>';
-        }
-      });
+    if (role === 'banker_only' || role === 'banker_player') {
+      const claim = await claimBankerRole(myPlayerId, name);
 
-      // Synchroniser la liste des cibles de paiement
-      onValue(ref(db, 'game/players'), (snapshot) => {
-        const players = snapshot.val() || {};
-        const select = document.getElementById("transfer-target");
-        select.innerHTML = '<option value="bank">🏦 La Banque</option>';
-        for (let id in players) {
-          if (id !== myPlayerId) {
-            select.innerHTML += `<option value="${id}">👤 ${players[id].name}</option>`;
-          }
-        }
-      });
+      if (!claim.success) {
+        alert(`Impossible ! ${claim.currentBanker.name} est déjà le banquier.`);
+        return;
+      }
     }
 
-    function listenToPlayersForBanker() {
-      onValue(ref(db, 'game/players'), (snapshot) => {
-        const players = snapshot.val() || {};
-        let html = "";
+    document.getElementById("setup-screen").style.display = "none";
+
+    if (role === 'banker_only') {
+      isBanker = true;
+      document.getElementById("banker-screen").style.display = "block";
+      listenToPlayersForBanker();
+    } else if (role === 'banker_player') {
+      isBanker = true;
+      document.getElementById("banker-screen").style.display = "block";
+      document.getElementById("player-screen").style.display = "block";
+      document.getElementById("role-badge").innerText = "👑 Banquier & Joueur";
+      setupPlayer(name);
+      listenToPlayersForBanker();
+    } else {
+      document.getElementById("player-screen").style.display = "block";
+      setupPlayer(name);
+    }
+  };
+
+  function setupPlayer(name) {
+    document.getElementById("display-name").innerText = name;
+    const playerRef = ref(db, 'game/players/' + myPlayerId);
+
+    get(playerRef).then((snapshot) => {
+      if (!snapshot.exists()) {
+        set(playerRef, { name: name, balance: 1500, properties: {} });
+      }
+    });
+
+    onValue(playerRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        myCurrentBalance = data.balance || 0;
+        document.getElementById("display-balance").innerText = myCurrentBalance;
         
-        for (let id in players) {
-          const p = players[id];
-          const props = p.properties || {};
-
-          // Generer badges proprietes avec bouton supprimer
-          let propBadges = "";
-          for (let propId in props) {
-            const propObj = ALL_PROPERTIES.find(item => item.id === propId);
-            if (propObj) {
-              propBadges += `
-                <span class="prop-tag ${propObj.class}">
-                  ${propObj.name}
-                  <button class="prop-remove-btn" onclick="removePropertyFromPlayer('${id}', '${propId}')">✕</button>
-                </span>`;
-            }
+        const props = data.properties || {};
+        let html = "";
+        for (let pId in props) {
+          const propObj = ALL_PROPERTIES.find(p => p.id === pId);
+          if (propObj) {
+            html += `<span class="prop-tag ${propObj.class}">${propObj.name}</span>`;
           }
-
-          // Options proprietes pas encore attribuees
-          let availablePropOptions = '<option value="">+ Donner une propriété...</option>';
-          ALL_PROPERTIES.forEach(prop => {
-            if (!props[prop.id]) {
-              availablePropOptions += `<option value="${prop.id}">${prop.name}</option>`;
-            }
-          });
-
-          html += `
-            <div class="player-card-banker">
-              <div class="player-header">
-                <span class="player-title">👤 ${p.name}</span>
-                <span class="player-money">${p.balance} €</span>
-              </div>
-              
-              <!-- Ajustement Solde -->
-              <div class="action-row">
-                <button class="btn-sm btn-success" onclick="adjustBalance('${id}', 200)">+200€</button>
-                <button class="btn-sm btn-success" onclick="adjustBalance('${id}', 50)">+50€</button>
-                <button class="btn-sm btn-danger" onclick="adjustBalance('${id}', -50)">-50€</button>
-                <button class="btn-sm btn-danger" onclick="adjustBalance('${id}', -200)">-200€</button>
-              </div>
-
-              <!-- Proprietes du joueur -->
-              <div style="margin-top: 10px;">
-                <div style="font-size: 0.75rem; font-weight:600; color:var(--text-muted); margin-bottom:4px;">PROPRIÉTÉS :</div>
-                <div>${propBadges || '<span style="font-size:0.75rem; color:var(--text-muted);">Aucune</span>'}</div>
-              </div>
-
-              <!-- Menu deroulant d'attribution -->
-              <div style="margin-top: 8px;">
-                <select style="padding: 6px; font-size:0.8rem;" onchange="givePropertyToPlayer('${id}', this.value); this.value='';">
-                  ${availablePropOptions}
-                </select>
-              </div>
-            </div>`;
         }
-        document.getElementById("players-list-banker").innerHTML = html || '<p style="text-align: center; color: var(--text-muted);">Aucun joueur connecté</p>';
-      });
-    }
+        document.getElementById("my-properties-list").innerHTML = html || '<span style="font-size:0.8rem; color:var(--text-muted);">Aucune propriété.</span>';
+      }
+    });
 
-    // Actions Banquier sur l'argent
-    window.adjustBalance = function(playerId, amount) {
-      get(ref(db, 'game/players/' + playerId + '/balance')).then(snapshot => {
-        const current = snapshot.val() || 0;
-        update(ref(db, 'game/players/' + playerId), { balance: current + amount });
-      });
-    };
+    onValue(ref(db, 'game/players'), (snapshot) => {
+      const players = snapshot.val() || {};
+      const select = document.getElementById("transfer-target");
+      select.innerHTML = '<option value="bank">🏦 La Banque</option>';
+      for (let id in players) {
+        if (id !== myPlayerId) {
+          select.innerHTML += `<option value="${id}">👤 ${players[id].name}</option>`;
+        }
+      }
+    });
+  }
 
-    // Actions Banquier sur les proprietes
-    window.givePropertyToPlayer = function(playerId, propId) {
-      if (!propId) return;
-      update(ref(db, 'game/players/' + playerId + '/properties'), {
-        [propId]: true
-      });
-    };
+  function listenToPlayersForBanker() {
+    onValue(ref(db, 'game/players'), (snapshot) => {
+      const players = snapshot.val() || {};
+      let html = "";
+      
+      for (let id in players) {
+        const p = players[id];
+        const props = p.properties || {};
 
-    window.removePropertyFromPlayer = function(playerId, propId) {
-      remove(ref(db, 'game/players/' + playerId + '/properties/' + propId));
-    };
+        let propBadges = "";
+        for (let propId in props) {
+          const propObj = ALL_PROPERTIES.find(item => item.id === propId);
+          if (propObj) {
+            propBadges += `
+              <span class="prop-tag ${propObj.class}">
+                ${propObj.name}
+                <button class="prop-remove-btn" onclick="removePropertyFromPlayer('${id}', '${propId}')">✕</button>
+              </span>`;
+          }
+        }
 
-    // Fonctions Joueur
-    window.passStart = function() {
-      update(ref(db, 'game/players/' + myPlayerId), { balance: myCurrentBalance + 200 });
-    };
-
-    window.sendMoney = function() {
-      const targetId = document.getElementById("transfer-target").value;
-      const amount = parseInt(document.getElementById("transfer-amount").value);
-
-      if (!amount || amount <= 0) return alert("Rentre un montant valide !");
-      if (amount > myCurrentBalance) return alert("Solde insuffisant !");
-
-      update(ref(db, 'game/players/' + myPlayerId), { balance: myCurrentBalance - amount });
-
-      if (targetId !== 'bank') {
-        get(ref(db, 'game/players/' + targetId + '/balance')).then((snapshot) => {
-          if (snapshot.exists()) {
-            update(ref(db, 'game/players/' + targetId), { balance: snapshot.val() + amount });
+        let availablePropOptions = '<option value="">+ Donner une propriété...</option>';
+        ALL_PROPERTIES.forEach(prop => {
+          if (!props[prop.id]) {
+            availablePropOptions += `<option value="${prop.id}">${prop.name}</option>`;
           }
         });
+
+        html += `
+          <div class="player-card-banker">
+            <div class="player-header">
+              <span class="player-title">👤 ${p.name}</span>
+              <span class="player-money">${p.balance} €</span>
+            </div>
+            
+            <div class="action-row">
+              <button class="btn-sm btn-success" onclick="adjustBalance('${id}', 200)">+200€</button>
+              <button class="btn-sm btn-success" onclick="adjustBalance('${id}', 50)">+50€</button>
+              <button class="btn-sm btn-danger" onclick="adjustBalance('${id}', -50)">-50€</button>
+              <button class="btn-sm btn-danger" onclick="adjustBalance('${id}', -200)">-200€</button>
+            </div>
+
+            <div style="margin-top: 10px;">
+              <div style="font-size: 0.75rem; font-weight:600; color:var(--text-muted); margin-bottom:4px;">PROPRIÉTÉS :</div>
+              <div>${propBadges || '<span style="font-size:0.75rem; color:var(--text-muted);">Aucune</span>'}</div>
+            </div>
+
+            <div style="margin-top: 8px;">
+              <select style="padding: 6px; font-size:0.8rem;" onchange="givePropertyToPlayer('${id}', this.value); this.value='';">
+                ${availablePropOptions}
+              </select>
+            </div>
+          </div>`;
       }
-      document.getElementById("transfer-amount").value = "";
-    };
+      document.getElementById("players-list-banker").innerHTML = html || '<p style="text-align: center; color: var(--text-muted);">Aucun joueur connecté</p>';
+    });
+  }
 
-    /* --- ADMIN --- */
-    window.openAdminModal = function() {
-      document.getElementById("admin-modal").style.display = "flex";
-      document.getElementById("admin-login-view").style.display = "block";
-      document.getElementById("admin-control-view").style.display = "none";
-    };
+  window.adjustBalance = function(playerId, amount) {
+    get(ref(db, 'game/players/' + playerId + '/balance')).then(snapshot => {
+      const current = snapshot.val() || 0;
+      update(ref(db, 'game/players/' + playerId), { balance: current + amount });
+    });
+  };
 
-    window.closeAdminModal = function() {
-      document.getElementById("admin-modal").style.display = "none";
-    };
+  window.givePropertyToPlayer = function(playerId, propId) {
+    if (!propId) return;
+    update(ref(db, 'game/players/' + playerId + '/properties'), {
+      [propId]: true
+    });
+  };
 
-    window.verifyAdminCode = function() {
-      if (document.getElementById("admin-pass").value === ADMIN_CODE) {
-        document.getElementById("admin-login-view").style.display = "none";
-        document.getElementById("admin-control-view").style.display = "block";
-      } else {
-        alert("Code PIN incorrect !");
-      }
-    };
+  window.removePropertyFromPlayer = function(playerId, propId) {
+    remove(ref(db, 'game/players/' + playerId + '/properties/' + propId));
+  };
 
-    window.resetBalancesOnly = function() {
-      if (!confirm("Remettre tous les soldes à 1500 € ?")) return;
-      get(ref(db, 'game/players')).then((snapshot) => {
+  window.passStart = function() {
+    update(ref(db, 'game/players/' + myPlayerId), { balance: myCurrentBalance + 200 });
+  };
+
+  window.sendMoney = function() {
+    const targetId = document.getElementById("transfer-target").value;
+    const amount = parseInt(document.getElementById("transfer-amount").value);
+
+    if (!amount || amount <= 0) return alert("Rentre un montant valide !");
+    if (amount > myCurrentBalance) return alert("Solde insuffisant !");
+
+    update(ref(db, 'game/players/' + myPlayerId), { balance: myCurrentBalance - amount });
+
+    if (targetId !== 'bank') {
+      get(ref(db, 'game/players/' + targetId + '/balance')).then((snapshot) => {
         if (snapshot.exists()) {
-          const players = snapshot.val();
-          for (let id in players) {
-            update(ref(db, 'game/players/' + id), { balance: 1500 });
-          }
-          closeAdminModal();
+          update(ref(db, 'game/players/' + targetId), { balance: snapshot.val() + amount });
         }
       });
-    };
+    }
+    document.getElementById("transfer-amount").value = "";
+  };
 
-    window.resetWholeGame = function() {
-      if (!confirm("Tout effacer ?")) return;
-      remove(ref(db, 'game')).then(() => location.reload());
-    };
-  </script>
-</body>
-</html>
+  window.openAdminModal = function() {
+    document.getElementById("admin-modal").style.display = "flex";
+    document.getElementById("admin-login-view").style.display = "block";
+    document.getElementById("admin-control-view").style.display = "none";
+  };
+
+  window.closeAdminModal = function() {
+    document.getElementById("admin-modal").style.display = "none";
+  };
+
+  window.verifyAdminCode = function() {
+    if (document.getElementById("admin-pass").value === ADMIN_CODE) {
+      document.getElementById("admin-login-view").style.display = "none";
+      document.getElementById("admin-control-view").style.display = "block";
+    } else {
+      alert("Code PIN incorrect !");
+    }
+  };
+
+  window.resetBalancesOnly = function() {
+    if (!confirm("Remettre tous les soldes à 1500 € ?")) return;
+    get(ref(db, 'game/players')).then((snapshot) => {
+      if (snapshot.exists()) {
+        const players = snapshot.val();
+        for (let id in players) {
+          update(ref(db, 'game/players/' + id), { balance: 1500 });
+        }
+        closeAdminModal();
+      }
+    });
+  };
+
+  window.resetWholeGame = function() {
+    if (!confirm("Tout effacer ?")) return;
+    // Clearing 'game' resets all players AND the banker lock
+    remove(ref(db, 'game')).then(() => location.reload());
+  };
+
+
+  
+</script>
