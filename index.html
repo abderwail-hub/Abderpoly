@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banque Jeu de Plateau</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #f0f2f5; text-align: center; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    button { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    button:disabled { background: #ccc; }
+    input { padding: 10px; margin: 5px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
+    .player-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+  </style>
+</head>
+<body>
+
+  <h1>💸 Banque de Jeu</h1>
+
+  <!-- ÉCRAN 1 : CONNEXION AU LOBBY -->
+  <div id="setup-screen" class="card">
+    <h2>Rejoindre ou Créer une partie</h2>
+    <input type="text" id="player-name" placeholder="Ton Prénom">
+    <br><br>
+    <button onclick="joinGame('banker')">Créer en tant que Banquier</button>
+    <button onclick="joinGame('player')">Rejoindre comme Joueur</button>
+  </div>
+
+  <!-- ÉCRAN 2 : INTERFACE DU BANQUIER -->
+  <div id="banker-screen" class="card" style="display:none;">
+    <h2>Tableau de Bord du Banquier</h2>
+    <div id="players-list"></div>
+  </div>
+
+  <!-- ÉCRAN 3 : INTERFACE DU JOUEUR -->
+  <div id="player-screen" class="card" style="display:none;">
+    <h2 id="display-name">Joueur</h2>
+    <p style="font-size: 2em; color: #28a745; font-weight: bold;">
+      Solde : <span id="display-balance">0</span> €
+    </p>
+    <hr>
+    <h3>Actions rapides</h3>
+    <button onclick="passStart()">Passer la case Départ (+200€)</button>
+  </div>
+
+  <!-- FIREBASE SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // 1. REMPLACE AVEC TES COORDONNÉES FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyB2qKPvvtMW-x29QE195uU_sTn065sNy14",
+        authDomain: "abderpoly.firebaseapp.com",
+        databaseURL: "https://abderpoly-default-rtdb.firebaseio.com",
+        projectId: "abderpoly",
+        storageBucket: "abderpoly.firebasestorage.app",
+        messagingSenderId: "24161366486",
+        appId: "1:24161366486:web:0d09ceefaf7159638e3477"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let myPlayerId = "";
+
+    window.joinGame = function(role) {
+      const name = document.getElementById("player-name").value.trim();
+      if (!name) return alert("Rentre ton prénom !");
+
+      myPlayerId = name.toLowerCase().replace(/\s+/g, "_");
+
+      if (role === 'banker') {
+        document.getElementById("setup-screen").style.display = "none";
+        document.getElementById("banker-screen").style.display = "block";
+
+        // Le Banquier écoute la liste des joueurs en temps réel
+        onValue(ref(db, 'game/players'), (snapshot) => {
+          const players = snapshot.val() || {};
+          let html = "";
+          for (let id in players) {
+            html += `
+              <div class="player-row">
+                <span><b>${players[id].name}</b></span>
+                <span>${players[id].balance} €</span>
+              </div>`;
+          }
+          document.getElementById("players-list").innerHTML = html;
+        });
+
+      } else {
+        document.getElementById("setup-screen").style.display = "none";
+        document.getElementById("player-screen").style.display = "block";
+        document.getElementById("display-name").innerText = name;
+
+        // Création du joueur avec 1500€ de départ s'il n'existe pas encore
+        const playerRef = ref(db, 'game/players/' + myPlayerId);
+        set(playerRef, { name: name, balance: 1500 });
+
+        // Le joueur écoute son propre solde en temps réel
+        onValue(playerRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            document.getElementById("display-balance").innerText = data.balance;
+          }
+        });
+      }
+    };
+
+    // Action : Passer par la case départ (+200€)
+    window.passStart = function() {
+      const balanceSpan = document.getElementById("display-balance");
+      const currentBalance = parseInt(balanceSpan.innerText);
+      
+      update(ref(db, 'game/players/' + myPlayerId), {
+        balance: currentBalance + 200
+      });
+    };
+  </script>
+</body>
+</html>
