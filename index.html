@@ -749,7 +749,7 @@
     }
 
     if (newPos === 30) {
-      alert("🚓 Allez en Prison ! Ne passez pas par la case départ.");
+      alert("Executive Allez en Prison ! Ne passez pas par la case départ.");
       newPos = 10;
       balanceBonus = 0;
     }
@@ -759,7 +759,11 @@
       balance: player.balance + balanceBonus
     });
 
-    handleTileLanding(newPos, total);
+    // Traitement de la case d'arrivée (Loyer, Achat, Taxe...)
+    await handleTileLanding(newPos, total);
+
+    // ⚡ PASSE AUTOMATIQUEMENT AU JOUEUR SUIVANT UNE FOIS LE TOUR TERMINÉ
+    await nextTurn();
   };
 
   // -------------------------------------------------------------
