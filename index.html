@@ -3,195 +3,299 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monopoly Paris - Banque & Propriétés</title>
+  <title>AbderPoly - Game Assistant</title>
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg: #f8fafc;
+      --primary: #2c3e50;
+      --accent: #27ae60;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --bg: #f4f6f7;
       --card-bg: #ffffff;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --success: #16a34a;
-      --danger: #dc2626;
-      --shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05);
+      --text-muted: #7f8c8d;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 15px; padding-bottom: 90px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
-    
-    .app-container { width: 100%; max-width: 500px; }
-    
-    .header { text-align: center; margin-bottom: 20px; }
-    .header h1 { font-size: 1.8rem; font-weight: 800; color: var(--text); }
-    .header p { color: var(--text-muted); font-size: 0.85rem; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: #333;
+      margin: 0;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+    }
 
-    .card { background: var(--card-bg); padding: 20px; border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 16px; }
-    
-    .form-group { margin-bottom: 14px; text-align: left; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
-    
-    input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); font-size: 0.95rem; outline: none; background: #f8fafc; }
-    input:focus, select:focus { border-color: var(--primary); background: #fff; }
+    .app-container {
+      width: 100%;
+      max-width: 500px;
+    }
 
-    .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-    
-    button { width: 100%; padding: 12px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: var(--primary-hover); }
-    button.btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); }
-    button.btn-success { background: var(--success); }
-    button.btn-danger { background: var(--danger); }
-    button.btn-sm { padding: 6px 10px; font-size: 0.8rem; width: auto; }
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
 
-    .balance-display { text-align: center; padding: 10px 0; }
-    .balance-amount { font-size: 2.8rem; font-weight: 800; color: var(--success); }
-    
-    .player-card-banker { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-    .player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .player-title { font-weight: 700; font-size: 1.1rem; }
-    .player-money { font-weight: 800; color: var(--success); font-size: 1.1rem; }
+    h1, h2, h3 { margin-top: 0; color: var(--primary); }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s;
+    }
+    button:active { opacity: 0.8; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-success { background: var(--accent); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-warning { background: var(--warning); color: white; }
 
-    .action-row { display: flex; gap: 6px; margin-top: 8px; }
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      width: auto;
+      margin-top: 0;
+    }
 
-    .prop-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; color: white; margin: 3px 2px; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-sizing: border-box;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    /* Badges de Propriété */
+    .prop-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: white;
+      margin: 2px;
+    }
     .prop-marron { background: #8B4513; }
-    .prop-bleu-ciel { background: #38bdf8; color: #0f172a; }
-    .prop-rose { background: #ec4899; }
-    .prop-orange { background: #f97316; }
-    .prop-rouge { background: #ef4444; }
-    .prop-jaune { background: #eab308; color: #0f172a; }
-    .prop-vert { background: #22c55e; }
-    .prop-bleu-fonce { background: #1e3a8a; }
-    .prop-gare { background: #475569; }
-    .prop-service { background: #64748b; }
+    .prop-bleu-ciel { background: #87CEEB; color: #333; }
+    .prop-rose { background: #FF69B4; }
+    .prop-orange { background: #FFA500; color: #333; }
+    .prop-rouge { background: #FF0000; }
+    .prop-jaune { background: #FFD700; color: #333; }
+    .prop-vert { background: #008000; }
+    .prop-bleu-fonce { background: #00008B; }
+    .prop-gare { background: #333; }
+    .prop-service { background: #7f8c8d; }
 
-    .prop-remove-btn { background: rgba(0,0,0,0.2); border: none; color: white; border-radius: 50%; width: 16px; height: 16px; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; font-size: 10px; margin-left: 4px; }
+    .prop-remove-btn {
+      background: rgba(255,255,255,0.3);
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      padding: 0;
+      cursor: pointer;
+    }
 
-    .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; background: #dbeafe; color: #1e40af; }
+    .player-card-banker {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #fafafa;
+    }
+    .player-header { display: flex; justify-content: space-between; font-weight: bold; }
+    .action-row { display: flex; gap: 5px; margin-top: 8px; }
 
-    /* ADMIN BAR & MODAL */
-    .admin-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid var(--border); padding: 10px 20px; text-align: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); }
-    .admin-bar button { width: auto; padding: 8px 16px; font-size: 0.85rem; background: #64748b; }
+    /* Modales Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .modal-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
 
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; padding: 20px; z-index: 1000; }
-    .modal { background: white; padding: 20px; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto; }
+    .badge-live { background: var(--danger); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .bid-box { background: #f8f9fa; border: 2px dashed #007bff; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    .bid-amount { font-size: 2.2rem; font-weight: bold; color: var(--primary); }
+    .bidder-name { color: var(--accent); font-weight: 600; margin-top: 5px; }
+    .auction-timer { font-weight: bold; color: var(--warning); margin-bottom: 15px; }
+    .auction-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-pass { background: #7f8c8d; color: white; grid-column: span 2; margin-top: 0; }
   </style>
 </head>
 <body>
 
-  <div class="app-container">
-    <div class="header">
-      <h1>🎲 Monopoly Paris</h1>
-      <p>Gestion Banque & Propriétés en Direct</p>
+<div class="app-container">
+
+  <!-- 1. ÉCRAN DE SETUP / REJOINDRIE -->
+  <div id="setup-screen" class="card">
+    <h1>🎩 AbderPoly</h1>
+    <p style="color: var(--text-muted); font-size: 0.9rem;">Entrez votre prénom et choisissez votre rôle pour démarrer.</p>
+    
+    <label for="player-name">Prénom :</label>
+    <input type="text" id="player-name" placeholder="Ex: Alex" />
+
+    <p id="banker-status" style="color: var(--danger); font-size: 0.85rem; font-weight: bold; display: none;"></p>
+
+    <button class="btn-primary btn-banker" onclick="joinGame('banker_only')">👑 Banquier Uniquement</button>
+    <button class="btn-primary btn-banker" onclick="joinGame('banker_player')">👑 Banquier & Joueur</button>
+    <button class="btn-success" onclick="joinGame('player_only')">👤 Joueur Uniquement</button>
+  </div>
+
+  <!-- 2. ÉCRAN JOUEUR -->
+  <div id="player-screen" class="card" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 id="display-name" style="margin: 0;">Joueur</h2>
+      <span id="role-badge" style="font-size: 0.8rem; font-weight: bold; color: var(--accent);">👤 Joueur</span>
+    </div>
+    
+    <div style="text-align: center; margin: 20px 0;">
+      <div style="font-size: 0.9rem; color: var(--text-muted);">Solde actuel</div>
+      <div style="font-size: 2.8rem; font-weight: bold; color: var(--accent);"><span id="display-balance">1500</span> €</div>
     </div>
 
-    <!-- ÉCRAN 1 : CONNEXION -->
-     <!-- ÉCRAN 1 : CONNEXION -->
-    <!-- Écran de configuration (setup-screen) -->
-    <div id="setup-screen">
-      <h2>Rejoindre la partie</h2>
-      <input type="text" id="player-name" placeholder="Ton prénom" />
-
-      <!-- Boutons du banquier (avec la classe btn-banker) -->
-      <button class="btn-banker" onclick="joinGame('banker_only')">👑 Banquier Uniquement</button>
-      <button class="btn-banker" onclick="joinGame('banker_player')">👑 Banquier & Joueur</button>
-      
-      <!-- Bouton joueur normal -->
-      <button onclick="joinGame('player_only')">👤 Joueur Uniquement</button>
-
-      <!-- (Optionnel) Un petit texte de statut -->
-      <p id="banker-status" style="color: #e74c3c; font-size: 0.85rem; display: none;"></p>
+    <!-- DÉS & DEPLACEMENT -->
+    <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
+      <h3>🎲 Plateau & Lancer de Dés</h3>
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">
+        Position actuelle : <strong id="current-position-name" style="color: var(--primary);">Case Départ</strong> (Case <span id="current-position-idx">0</span>/39)
+      </div>
+      <button class="btn-warning" onclick="rollDice()">🎲 Lancer les Dés</button>
     </div>
 
-
-    <!-- ÉCRAN 2 : PANNEAU BANQUIER -->
-    <div id="banker-screen" class="card" style="display:none;">
-      <h2>📊 Control Center Banquier</h2>
-      <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 12px;">Gère l'argent et les propriétés de tout le monde</p>
-      
-      <div id="players-list-banker">
-        <p style="text-align: center; color: var(--text-muted);">En attente de joueurs...</p>
+    <!-- PROPRIÉTÉS DU JOUEUR -->
+    <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
+      <h3>🏠 Mes Propriétés</h3>
+      <div id="my-properties-list">
+        <span style="font-size:0.8rem; color:var(--text-muted);">Aucune propriété.</span>
       </div>
     </div>
 
-    <!-- ÉCRAN 3 : INTERFACE JOUEUR -->
-    <div id="player-screen" class="card" style="display:none;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 id="display-name">Joueur</h2>
-        <span class="badge" id="role-badge">Joueur</span>
-      </div>
+    <!-- TRANSACTIONS / PAIEMENT -->
+    <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
+      <h3>💸 Effectuer un Paiement</h3>
+      <label>Destinataire :</label>
+      <select id="transfer-target">
+        <option value="bank">🏦 La Banque</option>
+      </select>
 
-      <div class="balance-display">
-        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Solde actuel</div>
-        <div class="balance-amount"><span id="display-balance">1500</span> €</div>
-      </div>
+      <label>Montant (€) :</label>
+      <input type="number" id="transfer-amount" placeholder="Ex: 200" />
 
-      <!-- PROPRIÉTÉS DU JOUEUR -->
-      <div style="margin-bottom: 15px;">
-        <label style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 6px;">Mes Titres de Propriété :</label>
-        <div id="my-properties-list" style="min-height: 30px;">
-          <span style="font-size: 0.8rem; color: var(--text-muted);">Aucune propriété pour l'instant.</span>
-        </div>
-      </div>
+      <button class="btn-danger" onclick="sendMoney()">Payer</button>
+    </div>
 
-      <hr style="border: none; border-top: 1px solid var(--border); margin: 15px 0;">
-
-      <h3>💸 Effectuer un paiement</h3>
-      <br>
-      
-      <div class="form-group">
-        <label for="transfer-target">Envoyer à</label>
-        <select id="transfer-target">
-          <option value="bank">🏦 La Banque</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="transfer-amount">Montant (€)</label>
-        <input type="number" id="transfer-amount" placeholder="200" min="1">
-      </div>
-
-      <button onclick="sendMoney()" style="margin-bottom: 10px;">Envoyer le paiement</button>
-      <button class="btn-success" onclick="passStart()">🚗 Case Départ (+200€)</button>
+    <div style="margin-top: 20px; text-align: center;">
+      <button class="btn-sm" style="background: transparent; color: var(--text-muted);" onclick="openAdminModal()">⚙️ Panneau Admin</button>
     </div>
   </div>
 
-  <!-- BARRE DU BAS : BOUTON ADMIN -->
-  <div class="admin-bar">
-    <button onclick="openAdminModal()">🔒 Code Admin</button>
-  </div>
-
-  <!-- MODAL ADMIN -->
-  <div id="admin-modal" class="modal-overlay">
-    <div class="modal">
-      <div id="admin-login-view">
-        <h3 style="margin-bottom: 12px;">🔒 Accès Administrateur</h3>
-        <div class="form-group">
-          <label for="admin-pass">Code PIN Admin</label>
-          <input type="password" id="admin-pass" placeholder="Code PIN secret">
-        </div>
-        <div class="btn-group">
-          <button onclick="verifyAdminCode()">Se connecter</button>
-          <button class="btn-secondary" onclick="closeAdminModal()">Annuler</button>
-        </div>
-      </div>
-
-      <div id="admin-control-view" style="display:none;">
-        <h3 style="margin-bottom: 8px;">⚙️ Réinitialisation</h3>
-        <div class="btn-group">
-          <button class="btn-secondary" onclick="resetBalancesOnly()">🔄 Remettre tous les soldes à 1500 €</button>
-          <button class="btn-danger" onclick="resetWholeGame()">🗑️ Effacer toute la partie</button>
-          <button class="btn-secondary" onclick="closeAdminModal()">Fermer</button>
-        </div>
-      </div>
+  <!-- 3. ÉCRAN BANQUIER -->
+  <div id="banker-screen" class="card" style="display: none; border: 2px solid var(--primary);">
+    <h2>👑 Panneau de Contrôle de la Banque</h2>
+    <p style="font-size: 0.85rem; color: var(--text-muted);">Gérez les soldes et les attributions de propriétés des joueurs.</p>
+    
+    <div id="players-list-banker">
+      <p style="text-align: center; color: var(--text-muted);">Aucun joueur connecté</p>
     </div>
   </div>
 
-  <!-- FIREBASE SDKs -->
-  <script type="module">
- import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, update, get, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+</div>
+
+<!-- MODALE D'ACHAT OU ENCHÈRE -->
+<div id="purchase-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-card">
+    <h2 id="modal-prop-name">Nom du Terrain</h2>
+    <p id="modal-prop-details" style="color: var(--text-muted);">Prix : 0 €</p>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button class="btn-success" onclick="confirmDirectBuy()">Acheter</button>
+      <button class="btn-warning" onclick="triggerAuctionFromModal()">Enchère</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE D'ENCHÈRES EN TEMPS RÉEL -->
+<div id="auction-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-card">
+    <div class="auction-header">
+      <span class="badge-live">🔴 ENCHÈRE EN DIRECT</span>
+      <h2 id="auction-prop-name">Propriété</h2>
+      <p id="auction-prop-price" style="color: var(--text-muted);">Prix de départ : 0 €</p>
+    </div>
+
+    <div class="auction-body">
+      <div class="bid-box">
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Offre Actuelle</span>
+        <div id="auction-current-bid" class="bid-amount">0 €</div>
+        <div id="auction-highest-bidder" class="bidder-name">Aucune offre</div>
+      </div>
+
+      <div class="auction-timer">
+        Temps restant : <span id="auction-timer-seconds">15</span>s
+      </div>
+
+      <div id="auction-controls" class="auction-actions">
+        <button class="btn-success" style="margin:0;" onclick="placeBid(10)">+10 €</button>
+        <button class="btn-success" style="margin:0;" onclick="placeBid(50)">+50 €</button>
+        <button class="btn-success" style="margin:0;" onclick="placeBid(100)">+100 €</button>
+        <button class="btn-pass" onclick="passAuction()">Passer (Abandonner)</button>
+      </div>
+
+      <div id="auction-status-msg" style="display: none; margin-top: 10px; font-weight: bold; color: var(--danger);"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE ADMIN -->
+<div id="admin-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-card">
+    <h2>🔒 Panneau Administrateur</h2>
+    
+    <div id="admin-login-view">
+      <input type="password" id="admin-pass" placeholder="Code PIN Admin (1234)" />
+      <button class="btn-primary" onclick="verifyAdminCode()">Valider</button>
+      <button class="btn-sm" style="background:transparent; color:#666;" onclick="closeAdminModal()">Annuler</button>
+    </div>
+
+    <div id="admin-control-view" style="display: none;">
+      <button class="btn-warning" onclick="resetBalancesOnly()">Réinitialiser les Soldes (1500€)</button>
+      <button class="btn-danger" onclick="resetWholeGame()">Effacer Toute la Partie</button>
+      <button class="btn-sm" style="background:transparent; color:#666; margin-top:15px;" onclick="closeAdminModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODULE FIREBASE & SCRIPTS APPLICATIFS -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getDatabase, ref, set, onValue, update, get, remove, runTransaction 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB2qKPvvtMW-x29QE195uU_sTn065sNy14",
@@ -203,82 +307,130 @@
     appId: "1:24161366486:web:0d09ceefaf7159638e3477"
   };
 
+  const ADMIN_CODE = "1234";
+
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
   let myPlayerId = "";
   let myCurrentBalance = 1500;
   let isBanker = false;
+  let currentModalProp = null;
+  let auctionTimerInterval = null;
+  let hasPassedAuction = false;
 
-  // =========================================================================
-  // ⬇️ POSE LE CODE ICI (Écouteur temps réel pour cacher/montrer les boutons)
-  // =========================================================================
+  // -------------------------------------------------------------
+  // CATALOGUE DES PROPRIÉTÉS DU MONOPOLY
+  // -------------------------------------------------------------
+  const ALL_PROPERTIES = [
+    { id: "p1", name: "Boulevard de Belleville", group: "marron", class: "prop-marron", price: 60, rent: [2, 10, 30, 90, 160, 250], houseCost: 50, mortgage: 30 },
+    { id: "p2", name: "Rue Lecourbe", group: "marron", class: "prop-marron", price: 60, rent: [4, 20, 60, 180, 320, 450], houseCost: 50, mortgage: 30 },
+    { id: "p3", name: "Rue de Vaugirard", group: "bleu-ciel", class: "prop-bleu-ciel", price: 100, rent: [6, 30, 90, 270, 400, 550], houseCost: 50, mortgage: 50 },
+    { id: "p4", name: "Rue de Courcelles", group: "bleu-ciel", class: "prop-bleu-ciel", price: 100, rent: [6, 30, 90, 270, 400, 550], houseCost: 50, mortgage: 50 },
+    { id: "p5", name: "Avenue de la République", group: "bleu-ciel", class: "prop-bleu-ciel", price: 120, rent: [8, 40, 100, 300, 450, 600], houseCost: 50, mortgage: 60 },
+    { id: "p6", name: "Boulevard de La Villette", group: "rose", class: "prop-rose", price: 140, rent: [10, 50, 150, 450, 625, 750], houseCost: 100, mortgage: 70 },
+    { id: "p7", name: "Avenue de Neuilly", group: "rose", class: "prop-rose", price: 140, rent: [10, 50, 150, 450, 625, 750], houseCost: 100, mortgage: 70 },
+    { id: "p8", name: "Rue de Paradis", group: "rose", class: "prop-rose", price: 160, rent: [12, 60, 180, 500, 700, 900], houseCost: 100, mortgage: 80 },
+    { id: "p9", name: "Avenue Mozart", group: "orange", class: "prop-orange", price: 180, rent: [14, 70, 200, 550, 750, 950], houseCost: 100, mortgage: 90 },
+    { id: "p10", name: "Boulevard Saint-Michel", group: "orange", class: "prop-orange", price: 180, rent: [14, 70, 200, 550, 750, 950], houseCost: 100, mortgage: 90 },
+    { id: "p11", name: "Place Pigalle", group: "orange", class: "prop-orange", price: 200, rent: [16, 80, 220, 600, 800, 1000], houseCost: 100, mortgage: 100 },
+    { id: "p12", name: "Avenue Matignon", group: "rouge", class: "prop-rouge", price: 220, rent: [18, 90, 250, 700, 875, 1050], houseCost: 150, mortgage: 110 },
+    { id: "p13", name: "Boulevard Malesherbes", group: "rouge", class: "prop-rouge", price: 220, rent: [18, 90, 250, 700, 875, 1050], houseCost: 150, mortgage: 110 },
+    { id: "p14", name: "Avenue Henri-Martin", group: "rouge", class: "prop-rouge", price: 240, rent: [20, 100, 300, 750, 925, 1100], houseCost: 150, mortgage: 120 },
+    { id: "p15", name: "Faubourg Saint-Honoré", group: "jaune", class: "prop-jaune", price: 260, rent: [22, 110, 330, 800, 975, 1150], houseCost: 150, mortgage: 130 },
+    { id: "p16", name: "Place de la Bourse", group: "jaune", class: "prop-jaune", price: 260, rent: [22, 110, 330, 800, 975, 1150], houseCost: 150, mortgage: 130 },
+    { id: "p17", name: "Rue La Fayette", group: "jaune", class: "prop-jaune", price: 280, rent: [24, 120, 360, 850, 1025, 1200], houseCost: 150, mortgage: 140 },
+    { id: "p18", name: "Avenue de Breteuil", group: "vert", class: "prop-vert", price: 300, rent: [26, 130, 390, 900, 1100, 1275], houseCost: 200, mortgage: 150 },
+    { id: "p19", name: "Avenue Foch", group: "vert", class: "prop-vert", price: 300, rent: [26, 130, 390, 900, 1100, 1275], houseCost: 200, mortgage: 150 },
+    { id: "p20", name: "Boulevard des Capucines", group: "vert", class: "prop-vert", price: 320, rent: [28, 150, 450, 1000, 1200, 1400], houseCost: 200, mortgage: 160 },
+    { id: "p21", name: "Avenue des Champs-Élysées", group: "bleu-fonce", class: "prop-bleu-fonce", price: 350, rent: [35, 175, 500, 1100, 1300, 1500], houseCost: 200, mortgage: 175 },
+    { id: "p22", name: "Rue de la Paix", group: "bleu-fonce", class: "prop-bleu-fonce", price: 400, rent: [50, 200, 600, 1400, 1700, 2000], houseCost: 200, mortgage: 200 },
+    { id: "g1", name: "Gare Montparnasse", group: "gare", class: "prop-gare", price: 200, rent: [25, 50, 100, 200], mortgage: 100 },
+    { id: "g2", name: "Gare de Lyon", group: "gare", class: "prop-gare", price: 200, rent: [25, 50, 100, 200], mortgage: 100 },
+    { id: "g3", name: "Gare du Nord", group: "gare", class: "prop-gare", price: 200, rent: [25, 50, 100, 200], mortgage: 100 },
+    { id: "g4", name: "Gare Saint-Lazare", group: "gare", class: "prop-gare", price: 200, rent: [25, 50, 100, 200], mortgage: 100 },
+    { id: "s1", name: "Compagnie d'Électricité", group: "service", class: "prop-service", price: 150, rentMultiplier: [4, 10], mortgage: 75 },
+    { id: "s2", name: "Compagnie des Eaux", group: "service", class: "prop-service", price: 150, rentMultiplier: [4, 10], mortgage: 75 }
+  ];
+
+  // -------------------------------------------------------------
+  // BOARD D'ORDRE DU PLATEAU (40 CASES)
+  // -------------------------------------------------------------
+  const BOARD = [
+    { id: 0,  name: "Case Départ", type: "start" },
+    { id: 1,  name: "Boulevard de Belleville", type: "property", propId: "p1" },
+    { id: 2,  name: "Caisse de Communauté", type: "community_chest" },
+    { id: 3,  name: "Rue Lecourbe", type: "property", propId: "p2" },
+    { id: 4,  name: "Impôt sur le revenu", type: "tax", amount: 200 },
+    { id: 5,  name: "Gare Montparnasse", type: "property", propId: "g1" },
+    { id: 6,  name: "Rue de Vaugirard", type: "property", propId: "p3" },
+    { id: 7,  name: "Chance", type: "chance" },
+    { id: 8,  name: "Rue de Courcelles", type: "property", propId: "p4" },
+    { id: 9,  name: "Avenue de la République", type: "property", propId: "p5" },
+    { id: 10, name: "Simple Visite / Prison", type: "jail_visit" },
+    { id: 11, name: "Boulevard de La Villette", type: "property", propId: "p6" },
+    { id: 12, name: "Compagnie d'Électricité", type: "property", propId: "s1" },
+    { id: 13, name: "Avenue de Neuilly", type: "property", propId: "p7" },
+    { id: 14, name: "Rue de Paradis", type: "property", propId: "p8" },
+    { id: 15, name: "Gare de Lyon", type: "property", propId: "g2" },
+    { id: 16, name: "Avenue Mozart", type: "property", propId: "p9" },
+    { id: 17, name: "Caisse de Communauté", type: "community_chest" },
+    { id: 18, name: "Boulevard Saint-Michel", type: "property", propId: "p10" },
+    { id: 19, name: "Place Pigalle", type: "property", propId: "p11" },
+    { id: 20, name: "Parc Gratuit", type: "free_parking" },
+    { id: 21, name: "Avenue Matignon", type: "property", propId: "p12" },
+    { id: 22, name: "Chance", type: "chance" },
+    { id: 23, name: "Boulevard Malesherbes", type: "property", propId: "p13" },
+    { id: 24, name: "Avenue Henri-Martin", type: "property", propId: "p14" },
+    { id: 25, name: "Gare du Nord", type: "property", propId: "g3" },
+    { id: 26, name: "Faubourg Saint-Honoré", type: "property", propId: "p15" },
+    { id: 27, name: "Place de la Bourse", type: "property", propId: "p16" },
+    { id: 28, name: "Compagnie des Eaux", type: "property", propId: "s2" },
+    { id: 29, name: "Rue La Fayette", type: "property", propId: "p17" },
+    { id: 30, name: "Allez en Prison", type: "go_to_jail" },
+    { id: 31, name: "Avenue de Breteuil", type: "property", propId: "p18" },
+    { id: 32, name: "Avenue Foch", type: "property", propId: "p19" },
+    { id: 33, name: "Caisse de Communauté", type: "community_chest" },
+    { id: 34, name: "Boulevard des Capucines", type: "property", propId: "p20" },
+    { id: 35, name: "Gare Saint-Lazare", type: "property", propId: "g4" },
+    { id: 36, name: "Chance", type: "chance" },
+    { id: 37, name: "Avenue des Champs-Élysées", type: "property", propId: "p21" },
+    { id: 38, name: "Taxe de Luxe", type: "tax", amount: 100 },
+    { id: 39, name: "Rue de la Paix", type: "property", propId: "p22" }
+  ];
+
+  // -------------------------------------------------------------
+  // ÉCOUTEUR EN TEMPS RÉEL SUR LE VERROUILLAGE DU BANQUIER
+  // -------------------------------------------------------------
   onValue(ref(db, 'game/banker'), (snapshot) => {
     const bankerData = snapshot.val();
     const bankerButtons = document.querySelectorAll('.btn-banker');
     const statusText = document.getElementById('banker-status');
 
     if (bankerData) {
-      // 🔴 Banquier présent : masquer les boutons chez TOUT LE MONDE en direct
       bankerButtons.forEach(btn => btn.style.display = 'none');
-
       if (statusText) {
         statusText.innerText = `👑 Banquier : ${bankerData.name}`;
         statusText.style.display = 'block';
       }
     } else {
-      // 🟢 Aucun banquier : réafficher les boutons
       bankerButtons.forEach(btn => btn.style.display = 'block');
-
       if (statusText) {
         statusText.style.display = 'none';
       }
     }
   });
 
-  const ALL_PROPERTIES = [
-    { id: "p1", name: "Boulevard de Belleville", group: "marron", class: "prop-marron" },
-    { id: "p2", name: "Rue Lecourbe", group: "marron", class: "prop-marron" },
-    { id: "p3", name: "Rue de Vaugirard", group: "bleu-ciel", class: "prop-bleu-ciel" },
-    { id: "p4", name: "Rue de Courcelles", group: "bleu-ciel", class: "prop-bleu-ciel" },
-    { id: "p5", name: "Avenue de la République", group: "bleu-ciel", class: "prop-bleu-ciel" },
-    { id: "p6", name: "Boulevard de La Villette", group: "rose", class: "prop-rose" },
-    { id: "p7", name: "Avenue de Neuilly", group: "rose", class: "prop-rose" },
-    { id: "p8", name: "Rue de Paradis", group: "rose", class: "prop-rose" },
-    { id: "p9", name: "Avenue Mozart", group: "orange", class: "prop-orange" },
-    { id: "p10", name: "Boulevard Saint-Michel", group: "orange", class: "prop-orange" },
-    { id: "p11", name: "Place Pigalle", group: "orange", class: "prop-orange" },
-    { id: "p12", name: "Avenue Matignon", group: "rouge", class: "prop-rouge" },
-    { id: "p13", name: "Boulevard Malesherbes", group: "rouge", class: "prop-rouge" },
-    { id: "p14", name: "Avenue Henri-Martin", group: "rouge", class: "prop-rouge" },
-    { id: "p15", name: "Faubourg Saint-Honoré", group: "jaune", class: "prop-jaune" },
-    { id: "p16", name: "Place de la Bourse", group: "jaune", class: "prop-jaune" },
-    { id: "p17", name: "Rue La Fayette", group: "jaune", class: "prop-jaune" },
-    { id: "p18", name: "Avenue de Breteuil", group: "vert", class: "prop-vert" },
-    { id: "p19", name: "Avenue Foch", group: "vert", class: "prop-vert" },
-    { id: "p20", name: "Boulevard des Capucines", group: "vert", class: "prop-vert" },
-    { id: "p21", name: "Avenue des Champs-Élysées", group: "bleu-fonce", class: "prop-bleu-fonce" },
-    { id: "p22", name: "Rue de la Paix", group: "bleu-fonce", class: "prop-bleu-fonce" },
-    { id: "g1", name: "Gare Montparnasse", group: "gare", class: "prop-gare" },
-    { id: "g2", name: "Gare de Lyon", group: "gare", class: "prop-gare" },
-    { id: "g3", name: "Gare du Nord", group: "gare", class: "prop-gare" },
-    { id: "g4", name: "Gare Saint-Lazare", group: "gare", class: "prop-gare" },
-    { id: "s1", name: "Compagnie d'Électricité", group: "service", class: "prop-service" },
-    { id: "s2", name: "Compagnie des Eaux", group: "service", class: "prop-service" }
-  ];
-
-  // Atomic Banker Locking Function
+  // -------------------------------------------------------------
+  // FONCTIONS DU BANQUIER (TRANSACTION DU BANQUIER)
+  // -------------------------------------------------------------
   async function claimBankerRole(playerId, playerName) {
     const bankerRef = ref(db, 'game/banker');
 
     const result = await runTransaction(bankerRef, (currentData) => {
-      if (currentData === null) {
-        return { id: playerId, name: playerName };
-      }
-      if (currentData.id === playerId) {
-        return currentData; 
-      }
-      return undefined; // Aborts transaction
+      if (currentData === null) return { id: playerId, name: playerName };
+      if (currentData.id === playerId) return currentData;
+      return undefined;
     });
 
     return {
@@ -295,7 +447,6 @@
 
     if (role === 'banker_only' || role === 'banker_player') {
       const claim = await claimBankerRole(myPlayerId, name);
-
       if (!claim.success) {
         alert(`Impossible ! ${claim.currentBanker.name} est déjà le banquier.`);
         return;
@@ -327,7 +478,7 @@
 
     get(playerRef).then((snapshot) => {
       if (!snapshot.exists()) {
-        set(playerRef, { name: name, balance: 1500, properties: {} });
+        set(playerRef, { name: name, balance: 1500, position: 0, properties: {} });
       }
     });
 
@@ -337,6 +488,10 @@
         myCurrentBalance = data.balance || 0;
         document.getElementById("display-balance").innerText = myCurrentBalance;
         
+        const pos = data.position || 0;
+        document.getElementById("current-position-idx").innerText = pos;
+        document.getElementById("current-position-name").innerText = BOARD[pos].name;
+
         const props = data.properties || {};
         let html = "";
         for (let pId in props) {
@@ -419,6 +574,285 @@
     });
   }
 
+  // -------------------------------------------------------------
+  // DÉS & DÉPLACEMENTS SUR LE PLATEAU
+  // -------------------------------------------------------------
+  window.rollDice = async function() {
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = Math.floor(Math.random() * 6) + 1;
+    const total = d1 + d2;
+
+    const playerSnap = await get(ref(db, `game/players/${myPlayerId}`));
+    const player = playerSnap.val();
+    
+    let oldPos = player.position || 0;
+    let newPos = (oldPos + total) % 40;
+
+    let balanceBonus = 0;
+    if (newPos < oldPos) {
+      balanceBonus = 200;
+      alert(`🎲 Dés : ${d1} + ${d2} = ${total}.\n🎉 Tu as franchi la case Départ ! +200 €`);
+    } else {
+      alert(`🎲 Dés : ${d1} + ${d2} = ${total}.\nTu te déplaces sur : ${BOARD[newPos].name}`);
+    }
+
+    if (newPos === 30) {
+      alert("🚓 Allez en Prison ! Ne passez pas par la case départ.");
+      newPos = 10;
+      balanceBonus = 0;
+    }
+
+    await update(ref(db, `game/players/${myPlayerId}`), {
+      position: newPos,
+      balance: player.balance + balanceBonus
+    });
+
+    handleTileLanding(newPos, total);
+  };
+
+  // -------------------------------------------------------------
+  // CALCUL ET GESTION DES LOYERS (FORME COMPLÈTE)
+  // -------------------------------------------------------------
+  function calculateRent(prop, owner, diceTotal = 0) {
+    if (!owner || !owner.properties || !owner.properties[prop.id]) return 0;
+
+    const ownerProps = owner.properties;
+
+    if (prop.group !== "gare" && prop.group !== "service") {
+      const houseCount = ownerProps[prop.id].houses || 0;
+      if (houseCount > 0) {
+        return prop.rent[houseCount];
+      }
+      const groupProperties = ALL_PROPERTIES.filter(p => p.group === prop.group);
+      const ownsFullGroup = groupProperties.every(p => ownerProps[p.id]);
+      return ownsFullGroup ? prop.rent[0] * 2 : prop.rent[0];
+    }
+
+    if (prop.group === "gare") {
+      const allStations = ALL_PROPERTIES.filter(p => p.group === "gare");
+      const ownedStationsCount = allStations.reduce((count, station) => {
+        return ownerProps[station.id] ? count + 1 : count;
+      }, 0);
+      const rentIndex = Math.max(0, Math.min(ownedStationsCount - 1, 3));
+      return prop.rent[rentIndex];
+    }
+
+    if (prop.group === "service") {
+      const allServices = ALL_PROPERTIES.filter(p => p.group === "service");
+      const ownedServicesCount = allServices.reduce((count, service) => {
+        return ownerProps[service.id] ? count + 1 : count;
+      }, 0);
+      const multiplier = ownedServicesCount === 2 ? prop.rentMultiplier[1] : prop.rentMultiplier[0];
+      return diceTotal * multiplier;
+    }
+
+    return 0;
+  }
+
+  async function handleTileLanding(tileIndex, diceTotal) {
+    const tile = BOARD[tileIndex];
+
+    if (tile.type === "tax") {
+      alert(`💸 Taxe à payer à la banque : ${tile.amount} €`);
+      await update(ref(db, `game/players/${myPlayerId}`), {
+        balance: myCurrentBalance - tile.amount
+      });
+      return;
+    }
+
+    if (tile.type === "property") {
+      const propDetails = ALL_PROPERTIES.find(p => p.id === tile.propId);
+      const allPlayersSnap = await get(ref(db, 'game/players'));
+      const allPlayers = allPlayersSnap.val() || {};
+
+      let ownerId = null;
+      let ownerName = "";
+
+      for (let pId in allPlayers) {
+        if (allPlayers[pId].properties && allPlayers[pId].properties[tile.propId]) {
+          ownerId = pId;
+          ownerName = allPlayers[pId].name;
+          break;
+        }
+      }
+
+      if (!ownerId) {
+        currentModalProp = propDetails;
+        document.getElementById("modal-prop-name").innerText = propDetails.name;
+        document.getElementById("modal-prop-details").innerText = `Prix d'achat : ${propDetails.price} €`;
+        document.getElementById("purchase-modal").style.display = "flex";
+      } else if (ownerId === myPlayerId) {
+        alert(`🏠 Tu es chez toi sur ${propDetails.name}.`);
+      } else {
+        const rentAmount = calculateRent(propDetails, allPlayers[ownerId], diceTotal);
+        alert(`🛑 Tu es chez ${ownerName} ! Loyer à payer : ${rentAmount} €`);
+        
+        await update(ref(db, `game/players/${myPlayerId}`), { balance: myCurrentBalance - rentAmount });
+        const ownerBalance = allPlayers[ownerId].balance || 0;
+        await update(ref(db, `game/players/${ownerId}`), { balance: ownerBalance + rentAmount });
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // FONCTIONS D'ACHAT DIRECT & MODALE
+  // -------------------------------------------------------------
+  window.confirmDirectBuy = async function() {
+    if (!currentModalProp) return;
+
+    if (myCurrentBalance < currentModalProp.price) {
+      alert("Solde insuffisant pour acheter cette propriété !");
+      return;
+    }
+
+    await update(ref(db, `game/players/${myPlayerId}`), {
+      balance: myCurrentBalance - currentModalProp.price
+    });
+
+    await update(ref(db, `game/players/${myPlayerId}/properties`), {
+      [currentModalProp.id]: { houses: 0 }
+    });
+
+    document.getElementById("purchase-modal").style.display = "none";
+    alert(`🎉 Tu as acheté ${currentModalProp.name} pour ${currentModalProp.price} € !`);
+  };
+
+  window.triggerAuctionFromModal = function() {
+    if (!currentModalProp) return;
+    document.getElementById("purchase-modal").style.display = "none";
+    startAuction(currentModalProp);
+  };
+
+  // -------------------------------------------------------------
+  // SYSTEME D'ENCHÈRES EN TEMPS RÉEL
+  // -------------------------------------------------------------
+  window.startAuction = async function(property) {
+    const auctionRef = ref(db, 'game/auction');
+    await set(auctionRef, {
+      propId: property.id,
+      propName: property.name,
+      propPrice: property.price,
+      currentBid: 10,
+      highestBidderId: "",
+      highestBidderName: "Aucun",
+      status: "active",
+      passedPlayers: {},
+      endTime: Date.now() + 15000
+    });
+  };
+
+  onValue(ref(db, 'game/auction'), async (snapshot) => {
+    const auction = snapshot.val();
+    const modal = document.getElementById("auction-modal");
+
+    if (!auction || auction.status !== "active") {
+      modal.style.display = "none";
+      if (auctionTimerInterval) clearInterval(auctionTimerInterval);
+      hasPassedAuction = false;
+      return;
+    }
+
+    modal.style.display = "flex";
+
+    document.getElementById("auction-prop-name").innerText = auction.propName;
+    document.getElementById("auction-prop-price").innerText = `Valeur initiale : ${auction.propPrice} €`;
+    document.getElementById("auction-current-bid").innerText = `${auction.currentBid} €`;
+    document.getElementById("auction-highest-bidder").innerText = 
+      auction.highestBidderId ? `Meneur : ${auction.highestBidderName}` : "Aucune offre";
+
+    const passedPlayers = auction.passedPlayers || {};
+    if (passedPlayers[myPlayerId]) {
+      hasPassedAuction = true;
+      document.getElementById("auction-controls").style.display = "none";
+      document.getElementById("auction-status-msg").style.display = "block";
+      document.getElementById("auction-status-msg").innerText = "Tu as passé sur cette enchère.";
+    } else {
+      document.getElementById("auction-controls").style.display = "grid";
+      document.getElementById("auction-status-msg").style.display = "none";
+    }
+
+    if (auctionTimerInterval) clearInterval(auctionTimerInterval);
+    auctionTimerInterval = setInterval(() => {
+      const remainingSeconds = Math.max(0, Math.ceil((auction.endTime - Date.now()) / 1000));
+      document.getElementById("auction-timer-seconds").innerText = remainingSeconds;
+
+      if (remainingSeconds <= 0) {
+        clearInterval(auctionTimerInterval);
+        finishAuction(auction);
+      }
+    }, 500);
+  });
+
+  window.placeBid = async function(increment) {
+    if (hasPassedAuction) return;
+
+    const name = document.getElementById("player-name").value.trim();
+    const auctionRef = ref(db, 'game/auction');
+
+    await runTransaction(auctionRef, (currentData) => {
+      if (!currentData || currentData.status !== "active") return currentData;
+
+      const newBid = currentData.currentBid + increment;
+      if (myCurrentBalance < newBid) {
+        alert("Solde insuffisant pour faire cette offre !");
+        return undefined;
+      }
+
+      return {
+        ...currentData,
+        currentBid: newBid,
+        highestBidderId: myPlayerId,
+        highestBidderName: name,
+        endTime: Date.now() + 10000 
+      };
+    });
+  };
+
+  window.passAuction = async function() {
+    hasPassedAuction = true;
+    await update(ref(db, `game/auction/passedPlayers/${myPlayerId}`), true);
+  };
+
+  async function finishAuction(auction) {
+    const auctionRef = ref(db, 'game/auction');
+
+    const result = await runTransaction(auctionRef, (currentData) => {
+      if (!currentData || currentData.status !== "active") return undefined;
+      return { ...currentData, status: "finished" };
+    });
+
+    if (!result.committed) return;
+
+    const winnerId = auction.highestBidderId;
+    const winnerName = auction.highestBidderName;
+    const finalPrice = auction.currentBid;
+    const propId = auction.propId;
+
+    if (winnerId) {
+      alert(`🎉 Enchère terminée ! ${winnerName} remporte ${auction.propName} pour ${finalPrice} €.`);
+
+      const winnerBalanceSnap = await get(ref(db, `game/players/${winnerId}/balance`));
+      const currentBalance = winnerBalanceSnap.val() || 0;
+      
+      await update(ref(db, `game/players/${winnerId}`), {
+        balance: currentBalance - finalPrice
+      });
+
+      await update(ref(db, `game/players/${winnerId}/properties`), {
+        [propId]: { houses: 0 }
+      });
+    } else {
+      alert(`❌ Personne n'a enchéri sur ${auction.propName}. La propriété reste à la banque.`);
+    }
+
+    setTimeout(() => {
+      remove(auctionRef);
+    }, 3000);
+  }
+
+  // -------------------------------------------------------------
+  // ACTIONS BANQUIER & TRANSFERTS
+  // -------------------------------------------------------------
   window.adjustBalance = function(playerId, amount) {
     get(ref(db, 'game/players/' + playerId + '/balance')).then(snapshot => {
       const current = snapshot.val() || 0;
@@ -429,16 +863,12 @@
   window.givePropertyToPlayer = function(playerId, propId) {
     if (!propId) return;
     update(ref(db, 'game/players/' + playerId + '/properties'), {
-      [propId]: true
+      [propId]: { houses: 0 }
     });
   };
 
   window.removePropertyFromPlayer = function(playerId, propId) {
     remove(ref(db, 'game/players/' + playerId + '/properties/' + propId));
-  };
-
-  window.passStart = function() {
-    update(ref(db, 'game/players/' + myPlayerId), { balance: myCurrentBalance + 200 });
   };
 
   window.sendMoney = function() {
@@ -460,6 +890,9 @@
     document.getElementById("transfer-amount").value = "";
   };
 
+  // -------------------------------------------------------------
+  // PANNEAU ADMINISTRATEUR
+  // -------------------------------------------------------------
   window.openAdminModal = function() {
     document.getElementById("admin-modal").style.display = "flex";
     document.getElementById("admin-login-view").style.display = "block";
@@ -493,11 +926,10 @@
   };
 
   window.resetWholeGame = function() {
-    if (!confirm("Tout effacer ?")) return;
-    // Clearing 'game' resets all players AND the banker lock
+    if (!confirm("Tout effacer et réinitialiser la partie ?")) return;
     remove(ref(db, 'game')).then(() => location.reload());
   };
-
-
-  
 </script>
+
+</body>
+</html>
